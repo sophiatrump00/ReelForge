@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Button, Space, List, Tag, Progress, Empty, Typography } from 'antd';
 import { PauseCircleOutlined, StopOutlined, VideoCameraOutlined } from '@ant-design/icons';
-import { metaPlacements } from './ProcessPlacementSelector';
+import { metaPlacements } from '../../constants/placements';
 
 const { Text } = Typography;
 
