@@ -1,0 +1,17 @@
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+sqlalchemy>=2.0.25
+alembic>=1.13.1
+psycopg2-binary>=2.9.9
+asyncpg>=0.29.0
+redis>=5.0.1
+prefect>=3.0.0rc1  # Or specify latest stable 2.x if 3.x is not fully out, but user asked for 3.x
+yt-dlp>=2023.11.16
+ffmpeg-python>=0.2.0
+python-multipart>=0.0.7
+requests>=2.31.0
+pydantic>=2.6.0
+pydantic-settings>=2.1.0
+python-dotenv>=1.0.1
+tenacity>=8.2.3
+openai>=1.12.0

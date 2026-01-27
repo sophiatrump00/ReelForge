@@ -1,0 +1,41 @@
+# Systems
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-data/
+.env
+
+# Python / Backend
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env
+backend/.pytest_cache/
+backend/build/
+backend/dist/
+backend/*.egg-info/
+
+# Node / Frontend
+node_modules/
+npm-debug.log
+yarn-error.log
+frontend/dist/
+frontend/.eslintcache
+frontend/coverage/
+
+# IDEs
+.vscode/
+.idea/
+
+# Project Specific
+data/
+!data/.gitkeep
+app/data/
+cookies.txt
+
+# Artifacts/Temp
+tmp/

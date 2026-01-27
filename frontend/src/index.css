@@ -1,0 +1,78 @@
+/* VS Code Dark+ Theme - Global Styles */
+:root {
+  --vscode-bg-primary: #1e1e1e;
+  --vscode-bg-secondary: #252526;
+  --vscode-bg-sidebar: #333333;
+  --vscode-text-primary: #d4d4d4;
+  --vscode-accent: #007acc;
+  --vscode-success: #4ec9b0;
+  --vscode-warning: #dcdcaa;
+  --vscode-error: #f14c4c;
+  --vscode-border: #3c3c3c;
+
+  font-family: 'Segoe UI', 'SF Pro Display', system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  color: var(--vscode-text-primary);
+  background-color: var(--vscode-bg-primary);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: var(--vscode-bg-primary);
+}
+
+a {
+  font-weight: 500;
+  color: var(--vscode-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  color: #3794d4;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--vscode-text-primary);
+  margin: 0;
+}
+
+/* Custom scrollbar for VS Code feel */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--vscode-bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--vscode-border);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Selection highlight */
+::selection {
+  background: rgba(0, 122, 204, 0.4);
+}
