@@ -7,11 +7,15 @@ const { TextArea } = Input;
 
 const getApiUrl = () => 'http://localhost:8000/api/v1';
 
+interface DownloadFormValues {
+    command: string;
+}
+
 const Download: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [form] = Form.useForm();
 
-    const onFinish = async (values: any) => {
+    const onFinish = async (values: DownloadFormValues) => {
         setLoading(true);
         try {
             const { command } = values;
