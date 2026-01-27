@@ -1,26 +1,16 @@
 import React, { useState } from 'react';
 import {
-    Card,
     Typography,
-    Input,
-    Tag,
     Button,
     Space,
-    Divider,
-    Upload,
-    message,
     Row,
     Col,
-    Empty
+    message,
 } from 'antd';
-import {
-    PlusOutlined,
-    UploadOutlined,
-    DownloadOutlined,
-    CheckCircleOutlined,
-    CloseCircleOutlined
-} from '@ant-design/icons';
+import { DownloadOutlined } from '@ant-design/icons';
 import logger from '../utils/logger';
+import KeywordCard from '../components/keywords/KeywordCard';
+import CategoryTagsCard from '../components/keywords/CategoryTagsCard';
 
 const { Title, Text } = Typography;
 
@@ -101,7 +91,7 @@ const Keywords: React.FC = () => {
         message.success('Keywords exported');
     };
 
-    const handleImport = (file: File) => {
+    const handleImport = (file: File): boolean => {
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
@@ -146,11 +136,6 @@ const Keywords: React.FC = () => {
         }
     };
 
-    const cardStyle = {
-        background: '#252526',
-        border: '1px solid #3c3c3c',
-    };
-
     return (
         <div>
             <Title level={3} style={{ marginBottom: 24 }}>
@@ -158,207 +143,32 @@ const Keywords: React.FC = () => {
             </Title>
 
             <Row gutter={[16, 16]}>
-                {/* Positive Keywords */}
                 <Col xs={24} lg={12}>
-                    <Card
-                        title={
-                            <Space>
-                                <CheckCircleOutlined style={{ color: '#4ec9b0' }} />
-                                <span>Positive Keywords (Brand/Product)</span>
-                            </Space>
-                        }
-                        style={cardStyle}
-                        extra={<Tag color="green">{keywords.positive.length}</Tag>}
-                    >
-                        <div style={{ marginBottom: 16 }}>
-                            <Space.Compact style={{ width: '100%' }}>
-                                <Input
-                                    placeholder="Enter brand/product name"
-                                    value={newPositive}
-                                    onChange={(e) => setNewPositive(e.target.value)}
-                                    onPressEnter={addPositive}
-                                />
-                                <Button type="primary" icon={<PlusOutlined />} onClick={addPositive}>
-                                    Add
-                                </Button>
-                            </Space.Compact>
-                        </div>
-
-                        <div style={{
-                            minHeight: 100,
-                            padding: 12,
-                            background: '#1e1e1e',
-                            borderRadius: 4,
-                            border: '1px solid #3c3c3c'
-                        }}>
-                            {keywords.positive.length > 0 ? (
-                                keywords.positive.map((word) => (
-                                    <Tag
-                                        key={word}
-                                        closable
-                                        onClose={() => removePositive(word)}
-                                        style={{
-                                            margin: 4,
-                                            background: 'rgba(78, 201, 176, 0.2)',
-                                            borderColor: '#4ec9b0',
-                                            color: '#4ec9b0'
-                                        }}
-                                    >
-                                        {word}
-                                    </Tag>
-                                ))
-                            ) : (
-                                <Empty description="No positive keywords" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-                            )}
-                        </div>
-
-                        <Divider style={{ margin: '16px 0' }} />
-
-                        <Upload
-                            accept=".txt,.json"
-                            showUploadList={false}
-                            beforeUpload={handleImport}
-                        >
-                            <Button icon={<UploadOutlined />}>Import from TXT</Button>
-                        </Upload>
-                    </Card>
+                    <KeywordCard
+                        type="positive"
+                        keywords={keywords.positive}
+                        newKeyword={newPositive}
+                        setNewKeyword={setNewPositive}
+                        onAdd={addPositive}
+                        onRemove={removePositive}
+                        onImport={handleImport}
+                    />
                 </Col>
 
-                {/* Negative Keywords */}
                 <Col xs={24} lg={12}>
-                    <Card
-                        title={
-                            <Space>
-                                <CloseCircleOutlined style={{ color: '#f14c4c' }} />
-                                <span>Negative Keywords (Competitor/Sensitive)</span>
-                            </Space>
-                        }
-                        style={cardStyle}
-                        extra={<Tag color="red">{keywords.negative.length}</Tag>}
-                    >
-                        <div style={{ marginBottom: 16 }}>
-                            <Space.Compact style={{ width: '100%' }}>
-                                <Input
-                                    placeholder="Enter competitor/sensitive word"
-                                    value={newNegative}
-                                    onChange={(e) => setNewNegative(e.target.value)}
-                                    onPressEnter={addNegative}
-                                />
-                                <Button type="primary" danger icon={<PlusOutlined />} onClick={addNegative}>
-                                    Add
-                                </Button>
-                            </Space.Compact>
-                        </div>
-
-                        <div style={{
-                            minHeight: 100,
-                            padding: 12,
-                            background: '#1e1e1e',
-                            borderRadius: 4,
-                            border: '1px solid #3c3c3c'
-                        }}>
-                            {keywords.negative.length > 0 ? (
-                                keywords.negative.map((word) => (
-                                    <Tag
-                                        key={word}
-                                        closable
-                                        onClose={() => removeNegative(word)}
-                                        style={{
-                                            margin: 4,
-                                            background: 'rgba(241, 76, 76, 0.2)',
-                                            borderColor: '#f14c4c',
-                                            color: '#f14c4c'
-                                        }}
-                                    >
-                                        {word}
-                                    </Tag>
-                                ))
-                            ) : (
-                                <Empty description="No negative keywords" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-                            )}
-                        </div>
-
-                        <Divider style={{ margin: '16px 0' }} />
-
-                        <Upload
-                            accept=".txt,.json"
-                            showUploadList={false}
-                            beforeUpload={handleImport}
-                        >
-                            <Button icon={<UploadOutlined />}>Import from TXT</Button>
-                        </Upload>
-                    </Card>
+                    <KeywordCard
+                        type="negative"
+                        keywords={keywords.negative}
+                        newKeyword={newNegative}
+                        setNewKeyword={setNewNegative}
+                        onAdd={addNegative}
+                        onRemove={removeNegative}
+                        onImport={handleImport}
+                    />
                 </Col>
 
-                {/* Category Tags */}
                 <Col xs={24}>
-                    <Card
-                        title="Category Tags (for material organization)"
-                        style={cardStyle}
-                    >
-                        <Row gutter={[16, 16]}>
-                            <Col xs={24} md={8}>
-                                <Text strong style={{ display: 'block', marginBottom: 8 }}>Product Type</Text>
-                                <div style={{
-                                    padding: 12,
-                                    background: '#1e1e1e',
-                                    borderRadius: 4,
-                                    border: '1px solid #3c3c3c'
-                                }}>
-                                    {keywords.categories.productType.length > 0 ? (
-                                        keywords.categories.productType.map((tag) => (
-                                            <Tag key={tag} style={{ margin: 4 }}>{tag}</Tag>
-                                        ))
-                                    ) : (
-                                        <Text type="secondary">No tags</Text>
-                                    )}
-                                    <Tag style={{ margin: 4, borderStyle: 'dashed' }}>
-                                        <PlusOutlined /> Add
-                                    </Tag>
-                                </div>
-                            </Col>
-                            <Col xs={24} md={8}>
-                                <Text strong style={{ display: 'block', marginBottom: 8 }}>Content Type</Text>
-                                <div style={{
-                                    padding: 12,
-                                    background: '#1e1e1e',
-                                    borderRadius: 4,
-                                    border: '1px solid #3c3c3c'
-                                }}>
-                                    {keywords.categories.contentType.length > 0 ? (
-                                        keywords.categories.contentType.map((tag) => (
-                                            <Tag key={tag} color="blue" style={{ margin: 4 }}>{tag}</Tag>
-                                        ))
-                                    ) : (
-                                        <Text type="secondary">No tags</Text>
-                                    )}
-                                    <Tag style={{ margin: 4, borderStyle: 'dashed' }}>
-                                        <PlusOutlined /> Add
-                                    </Tag>
-                                </div>
-                            </Col>
-                            <Col xs={24} md={8}>
-                                <Text strong style={{ display: 'block', marginBottom: 8 }}>Emotion Tags</Text>
-                                <div style={{
-                                    padding: 12,
-                                    background: '#1e1e1e',
-                                    borderRadius: 4,
-                                    border: '1px solid #3c3c3c'
-                                }}>
-                                    {keywords.categories.emotion.length > 0 ? (
-                                        keywords.categories.emotion.map((tag) => (
-                                            <Tag key={tag} color="purple" style={{ margin: 4 }}>{tag}</Tag>
-                                        ))
-                                    ) : (
-                                        <Text type="secondary">No tags</Text>
-                                    )}
-                                    <Tag style={{ margin: 4, borderStyle: 'dashed' }}>
-                                        <PlusOutlined /> Add
-                                    </Tag>
-                                </div>
-                            </Col>
-                        </Row>
-                    </Card>
+                    <CategoryTagsCard categories={keywords.categories} />
                 </Col>
             </Row>
 
