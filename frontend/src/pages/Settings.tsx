@@ -147,6 +147,7 @@ const Settings: React.FC = () => {
         background: '#252526',
         border: '1px solid #3c3c3c',
         marginBottom: 16,
+        width: '100%',
     };
 
     const items = [
@@ -182,7 +183,7 @@ const Settings: React.FC = () => {
     ];
 
     return (
-        <div style={{ padding: 24, maxWidth: 900 }}>
+        <div style={{ padding: 24, width: '100%' }}>
             <h1 style={{ color: 'white', marginBottom: 24 }}>Settings</h1>
             <Card bordered={false} style={cardStyle}>
                 <Tabs defaultActiveKey="1" items={items} />

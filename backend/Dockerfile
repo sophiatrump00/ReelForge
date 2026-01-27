@@ -1,12 +1,16 @@
-FROM python:3.11-slim
+FROM python:3.11-slim-bookworm
 
 # Install system dependencies
-# ffmpeg is crucial for video processing
-RUN apt-get update && apt-get install -y \
-    ffmpeg \
+# Split installation to avoid memory exhaustion
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
     curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install ffmpeg separately to manage memory usage
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
