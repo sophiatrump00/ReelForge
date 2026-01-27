@@ -15,11 +15,25 @@ class Step3Scoring:
         # Iterate segments and ask AI to rate them based on content/rules
         scored_segments = []
         for segment in timeline:
-            # score = self.ai.score_segment(segment)
-            score = 8.5 # Placeholder
+            try:
+                topic = segment.get("topic", "unknown")
+                response = await self.ai.generate_text(
+                    prompt=f"Rate the viral potential of a video segment about '{topic}' on a scale of 0 to 10. Return ONLY the number.",
+                    system_prompt="You are a viral video expert. Output a single floating point number."
+                )
+                import re
+                match = re.search(r"[\d\.]+", response)
+                if match:
+                    score = float(match.group(0))
+                else:
+                    score = 5.0
+            except Exception as e:
+                logger.error(f"Scoring failed: {e}")
+                score = 5.0
+
             scored_segments.append({
                 **segment,
-                "score": score
+                "score": max(0.0, min(10.0, score))
             })
         
         return scored_segments

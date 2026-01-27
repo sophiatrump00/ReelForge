@@ -28,6 +28,27 @@ const Settings: React.FC = () => {
     const [maxProcesses, setMaxProcesses] = useState(4);
     const [checkingCookies, setCheckingCookies] = useState(false);
 
+    // Load Settings
+    React.useEffect(() => {
+        const loadSettings = async () => {
+            try {
+                const res = await fetch('/api/v1/settings');
+                if (res.ok) {
+                    const data = await res.json();
+                    form.setFieldsValue({
+                        vendor: data.vendor,
+                        api_base: data.api_base,
+                        api_key: data.api_key,
+                        vl_model: data.vl_model
+                    });
+                }
+            } catch (e) {
+                logger.error('Settings', 'load_config', 'Failed to load settings', e as Error);
+            }
+        };
+        loadSettings();
+    }, [form]);
+
     const detectSiteFromCookies = (content: string): string => {
         const lowerContent = content.toLowerCase();
         if (lowerContent.includes('.tiktok.com') || lowerContent.includes('tiktok')) {
@@ -95,10 +116,23 @@ const Settings: React.FC = () => {
         return false;
     };
 
-    const handleSave = (values: SettingsValues) => {
-        logger.userAction('Settings', 'save_config', values as unknown as Record<string, unknown>);
-        console.log('Saved settings:', values);
-        message.success('Configuration saved.');
+    const handleSave = async (values: SettingsValues) => {
+        try {
+            const res = await fetch('/api/v1/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(values)
+            });
+
+            if (res.ok) {
+                logger.userAction('Settings', 'save_config', values as unknown as Record<string, unknown>);
+                message.success('Configuration saved.');
+            } else {
+                message.error('Failed to save configuration.');
+            }
+        } catch (e) {
+            message.error('Failed to save configuration.');
+        }
     };
 
     const handleTestConnection = async () => {
@@ -107,16 +141,30 @@ const Settings: React.FC = () => {
             setTesting(true);
             logger.apiRequest('Settings', 'POST', '/api/v1/ai/test');
 
-            setTimeout(() => {
-                if (values.api_key && values.api_base) {
-                    logger.apiResponse('Settings', 'POST', '/api/v1/ai/test', 200);
-                    message.success(`Successfully connected to ${values.vendor} compatible API!`);
-                } else {
-                    logger.apiResponse('Settings', 'POST', '/api/v1/ai/test', 400);
-                    message.error('Missing API Key or Base URL');
-                }
-                setTesting(false);
-            }, 1500);
+            logger.apiRequest('Settings', 'POST', '/api/v1/ai/test');
+
+            const response = await fetch('/api/v1/ai/test', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    api_key: values.api_key,
+                    api_base: values.api_base,
+                    vendor: values.vendor || 'custom',
+                    vl_model: values.vl_model
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                logger.apiResponse('Settings', 'POST', '/api/v1/ai/test', 200);
+                message.success(`Connection successful! Response: ${data.response || 'OK'}`);
+            } else {
+                throw new Error(data.detail || 'Connection failed');
+            }
+            setTesting(false);
         } catch (error) {
             logger.error('Settings', 'test_connection', 'Validation failed', error as Error);
             setTesting(false);

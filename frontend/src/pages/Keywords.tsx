@@ -35,6 +35,22 @@ const Keywords: React.FC = () => {
         },
     });
 
+    // Load Keywords
+    React.useEffect(() => {
+        const loadKeywords = async () => {
+            try {
+                const res = await fetch('/api/v1/keywords');
+                if (res.ok) {
+                    const data = await res.json();
+                    setKeywords(data);
+                }
+            } catch (e) {
+                logger.error('Keywords', 'load_error', 'Failed to load keywords', e as Error);
+            }
+        };
+        loadKeywords();
+    }, []);
+
     const [newPositive, setNewPositive] = useState('');
     const [newNegative, setNewNegative] = useState('');
 
@@ -127,9 +143,19 @@ const Keywords: React.FC = () => {
     const saveConfig = async () => {
         try {
             logger.apiRequest('Keywords', 'POST', '/api/v1/keywords');
-            await new Promise(resolve => setTimeout(resolve, 500));
-            logger.apiResponse('Keywords', 'POST', '/api/v1/keywords', 200);
-            message.success('Keywords saved');
+
+            const res = await fetch('/api/v1/keywords', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(keywords)
+            });
+
+            if (res.ok) {
+                logger.apiResponse('Keywords', 'POST', '/api/v1/keywords', 200);
+                message.success('Keywords saved');
+            } else {
+                throw new Error('Save failed');
+            }
         } catch (err) {
             logger.apiError('Keywords', 'POST', '/api/v1/keywords', err as Error);
             message.error('Save failed');

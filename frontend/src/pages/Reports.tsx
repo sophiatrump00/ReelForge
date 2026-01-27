@@ -65,10 +65,33 @@ const Reports: React.FC = () => {
         });
 
         try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            logger.apiResponse('Reports', 'POST', '/api/v1/reports/generate', 200);
-            message.success(`Report generated successfully (${exportFormat.toUpperCase()})`);
+            const response = await fetch('/api/v1/reports/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    date_range: [dateRange[0].format('YYYY-MM-DD'), dateRange[1].format('YYYY-MM-DD')],
+                    content: selectedContent,
+                    format: exportFormat
+                })
+            });
+
+            if (response.ok) {
+                // Download file
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `report_${dayjs().format('YYYYMMDD')}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                logger.apiResponse('Reports', 'POST', '/api/v1/reports/generate', 200);
+                message.success('Report downloaded');
+            } else {
+                throw new Error('Generation failed');
+            }
         } catch (err) {
             logger.apiError('Reports', 'POST', '/api/v1/reports/generate', err as Error);
             message.error('Failed to generate report');

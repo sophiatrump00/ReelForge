@@ -16,7 +16,7 @@ import type { FileItem } from '../components/materials/FileDetailDrawer';
 
 const { Title } = Typography;
 
-// Initial empty file system - will be populated by API
+// Initial state
 const emptyFileSystem: FileItem = {
     name: 'data',
     type: 'folder',
@@ -24,11 +24,16 @@ const emptyFileSystem: FileItem = {
 };
 
 const Materials: React.FC = () => {
-    const [currentPath, setCurrentPath] = useState<string[]>(['data']);
+    const [fileSystem, setFileSystem] = useState<FileItem>(emptyFileSystem);
     const [loading, setLoading] = useState(false);
+    const [currentPath, setCurrentPath] = useState<string[]>(['data']);
     const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
-    const [fileSystem] = useState<FileItem>(emptyFileSystem);
+
+    // Fetch files on mount
+    React.useEffect(() => {
+        handleScanFolder();
+    }, []);
 
     // Helper to traverse file system
     const getCurrentFolder = (): FileItem | undefined => {
@@ -53,12 +58,25 @@ const Materials: React.FC = () => {
 
     const handleScanFolder = async () => {
         setLoading(true);
-        logger.apiRequest('Materials', 'GET', '/api/v1/materials/scan');
-        // TODO: Implement actual API call
-        setTimeout(() => {
+        logger.apiRequest('Materials', 'GET', '/api/v1/materials/files/scan');
+
+        try {
+            const response = await fetch('/api/v1/materials/files/scan');
+            if (response.ok) {
+                const data = await response.json();
+                setFileSystem(data);
+                logger.apiResponse('Materials', 'GET', '/api/v1/materials/files/scan', 200);
+                // If current path is invalid in new tree, reset to root
+                // For simplicity, we just keep current path or reset if needed.
+                // Here we keep it.
+            } else {
+                logger.apiResponse('Materials', 'GET', '/api/v1/materials/files/scan', response.status);
+            }
+        } catch (error) {
+            logger.apiError('Materials', 'GET', '/api/v1/materials/files/scan', error as Error);
+        } finally {
             setLoading(false);
-            logger.apiResponse('Materials', 'GET', '/api/v1/materials/scan', 200);
-        }, 1000);
+        }
     };
 
     const handleViewDetails = (file: FileItem) => {

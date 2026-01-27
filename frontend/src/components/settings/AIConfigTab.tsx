@@ -67,7 +67,7 @@ const AIConfigTab: React.FC<AIConfigTabProps> = ({ form, testing, onSave, onTest
             <Form.Item>
                 <Space>
                     <Button type="primary" htmlType="submit">Save Configuration</Button>
-                    <Button icon={<ApiOutlined />} onClick={onTestConnection} loading={testing}>
+                    <Button icon={<ApiOutlined />} onClick={onTestConnection} loading={testing} htmlType="button">
                         Test Connection
                     </Button>
                 </Space>

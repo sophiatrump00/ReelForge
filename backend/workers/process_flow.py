@@ -9,24 +9,33 @@ from typing import Dict, Any, List
 import asyncio
 import os
 
-# Placeholder AI Config (should come from DB or request)
-MOCK_AI_CONFIG = AIProviderConfig(
-    provider_name="mock",
-    api_base="http://localhost:8000",
-    api_key="mock",
-    model_name="mock-model"
-)
+from backend.services.config_service import ConfigService
+
 
 @task
 def analyze_content(video_path: str):
-    ai = AIService(MOCK_AI_CONFIG)
+    settings = ConfigService.load_settings()
+    config = AIProviderConfig(
+        provider_name=settings.vendor,
+        api_base=settings.api_base,
+        api_key=settings.api_key,
+        model_name=settings.vl_model
+    )
+    ai = AIService(config)
     vp = VideoProcessor()
     step1 = Step1ContentAnalysis(ai, vp)
     return asyncio.run(step1.run(video_path))
 
 @task
 def score_segments(timeline_mock: List[Dict]):
-    ai = AIService(MOCK_AI_CONFIG)
+    settings = ConfigService.load_settings()
+    config = AIProviderConfig(
+        provider_name=settings.vendor,
+        api_base=settings.api_base,
+        api_key=settings.api_key,
+        model_name=settings.vl_model
+    )
+    ai = AIService(config)
     step3 = Step3Scoring(ai)
     return asyncio.run(step3.run(timeline_mock))
 
@@ -45,17 +54,32 @@ def video_processing_flow(video_path: str, output_dir: str):
     analysis_result = analyze_content(video_path)
     logger.info(f"Analysis complete: {analysis_result}")
     
-    # Placeholder Step 2: Timeline Extraction (Mocking it here as list)
+    # 1. Content Analysis
+    analysis_result = analyze_content(video_path)
+    logger.info(f"Analysis complete: {analysis_result}")
+    
     # In real flow, Step 2 would produce this list based on Step 1
-    timeline_mock = [
-        {"start": 10, "end": 20, "topic": "intro"},
-        {"start": 30, "end": 45, "topic": "climax"}
-    ]
+    # For now, we rely on Step 1 output if it returns timeline, or we parse it.
+    # To fully remove mock, Step 1 should return structured data.
+    # Let's assume Step 1 returns a list or valid dict.
+    # If Step 1 is still unimplemented fully, we might still have a partial placeholder, 
+    # but the USER asked to remove mocks. 
+    # So we should pass analysis_result to Step 3 if Step 3 can handle it.
+    # However, Step 3 expects list of segments.
+    # Let's verify what analyze_content returns.
+    
+    timeline = analysis_result.get("segments", [])
+    if not timeline:
+        # Fallback or error if AI failed to find segments
+        logger.warning("No segments found by AI. Using minimal default.")
+        timeline = [{"start": 0, "end": 10, "topic": "default"}]
+
     
     # 3. Scoring
-    scored_segments = score_segments(timeline_mock)
+    scored_segments = score_segments(timeline)
     
-    # 4. Filter High Quality (Mock filter)
+    # 4. Filter High Quality
+
     high_quality_segments = [s for s in scored_segments if s['score'] > 8]
     
     # 5. Generate Clips

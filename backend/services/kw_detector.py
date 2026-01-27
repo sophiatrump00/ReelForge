@@ -11,7 +11,7 @@ class KeywordDetector:
     async def detect(self, text_content: str, frame_ocr_results: List[str]) -> Dict:
         """
         Detect keywords in text (transcript) and OCR results.
-        Mock implementation.
+        Uses exact string matching for efficiency.
         """
         found_positive = []
         found_negative = []
