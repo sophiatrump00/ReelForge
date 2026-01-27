@@ -77,6 +77,7 @@ curl "http://localhost:8000/api/v1/materials"
 - **前端无法访问？**
   - 如果 `setup.sh` 提示前端失败，请手动执行：
     `docker compose up -d frontend`
+  - 访问 `http://localhost:3000` 也可以打开前端。
 
 ---
 

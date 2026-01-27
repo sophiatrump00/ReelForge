@@ -596,6 +596,7 @@ services:
     build: ./frontend
     ports:
       - "8080:5173"
+      - "3000:5173"
     depends_on:
       - reelforge-api
 ```
@@ -671,6 +672,10 @@ reelforge/
 │       │   ├── Reports.tsx
 │       │   └── Settings.tsx
 │       ├── components/
+│       │   ├── settings/           # 设置页组件 (AI/Download/Storage/Logging)
+│       │   ├── process/            # 处理页组件 (Selector/ClipSettings/Queue)
+│       │   ├── keywords/           # 关键词组件 (Card/Tags)
+│       │   └── ...
 │       └── stores/
 │
 ├── electron/                     # Electron桌面

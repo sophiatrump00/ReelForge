@@ -28,7 +28,7 @@ docker compose logs -f
 | 服务 | 地址 | 说明 |
 |------|------|------|
 | **API Backend** | `http://localhost:8000/docs` | Swagger API 文档 |
-| **Frontend** | `http://localhost:8080` | Web 界面 |
+| **Frontend** | `http://localhost:8080` 或 `http://localhost:3000` | Web 界面 |
 | **PostgreSQL** | `localhost:5432` | 数据库 (User: reelforge/Pass: reelforge_secret) |
 
 ### 主要功能使用
