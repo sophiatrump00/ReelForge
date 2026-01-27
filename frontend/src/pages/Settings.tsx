@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Tabs, Form, Card, message } from 'antd';
+import { Tabs, Form, Card, message, Alert } from 'antd';
 import { RobotOutlined, FolderOpenOutlined, SettingOutlined, FileTextOutlined } from '@ant-design/icons';
 import logger from '../utils/logger';
 import AIConfigTab from '../components/settings/AIConfigTab';
@@ -27,6 +27,7 @@ const Settings: React.FC = () => {
     });
     const [maxProcesses, setMaxProcesses] = useState(4);
     const [checkingCookies, setCheckingCookies] = useState(false);
+    const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'info' | 'warning' | 'error', message: string, description?: string } | null>(null);
 
     // Load Settings
     React.useEffect(() => {
@@ -127,11 +128,26 @@ const Settings: React.FC = () => {
             if (res.ok) {
                 logger.userAction('Settings', 'save_config', values as unknown as Record<string, unknown>);
                 message.success('Configuration saved.');
+                setStatusMessage({
+                    type: 'success',
+                    message: 'Configuration Saved',
+                    description: 'Your settings have been successfully saved.'
+                });
             } else {
                 message.error('Failed to save configuration.');
+                setStatusMessage({
+                    type: 'error',
+                    message: 'Save Failed',
+                    description: 'The server rejected the configuration. Please check your logs.'
+                });
             }
         } catch (e) {
             message.error('Failed to save configuration.');
+            setStatusMessage({
+                type: 'error',
+                message: 'Save Failed',
+                description: e instanceof Error ? e.message : 'Unknown error occurred'
+            });
         }
     };
 
@@ -139,7 +155,7 @@ const Settings: React.FC = () => {
         try {
             const values = await form.validateFields();
             setTesting(true);
-            logger.apiRequest('Settings', 'POST', '/api/v1/ai/test');
+            setStatusMessage({ type: 'info', message: 'Testing Connection...', description: 'Verifying API configuration...' });
 
             logger.apiRequest('Settings', 'POST', '/api/v1/ai/test');
 
@@ -160,7 +176,12 @@ const Settings: React.FC = () => {
 
             if (response.ok) {
                 logger.apiResponse('Settings', 'POST', '/api/v1/ai/test', 200);
-                message.success(`Connection successful! Response: ${data.response || 'OK'}`);
+                message.success(`Connection successful!`);
+                setStatusMessage({
+                    type: 'success',
+                    message: 'Connection Successful',
+                    description: `Provider responded: ${data.response}`
+                });
             } else {
                 throw new Error(data.detail || 'Connection failed');
             }
@@ -168,6 +189,11 @@ const Settings: React.FC = () => {
         } catch (error) {
             logger.error('Settings', 'test_connection', 'Validation failed', error as Error);
             setTesting(false);
+            setStatusMessage({
+                type: 'error',
+                message: 'Connection Failed',
+                description: error instanceof Error ? error.message : 'Unknown error'
+            });
         }
     };
 
@@ -233,6 +259,17 @@ const Settings: React.FC = () => {
     return (
         <div style={{ padding: 24, width: '100%' }}>
             <h1 style={{ color: 'white', marginBottom: 24 }}>Settings</h1>
+            {statusMessage && (
+                <Alert
+                    message={statusMessage.message}
+                    description={statusMessage.description}
+                    type={statusMessage.type}
+                    showIcon
+                    closable
+                    onClose={() => setStatusMessage(null)}
+                    style={{ marginBottom: 24 }}
+                />
+            )}
             <Card bordered={false} style={cardStyle}>
                 <Tabs defaultActiveKey="1" items={items} />
             </Card>

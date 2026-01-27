@@ -36,8 +36,5 @@ async def test_ai_connection(request: AIConfigTestRequest):
         return {"status": "success", "message": "Connection successful", "response": response}
     except Exception as e:
         logger.error(f"AI Connection Test Failed: {str(e)}")
-        # Return 200 with error details so frontend can display it nicely, OR 400
-        # Returning 400 is semantically better for "Bad Request" (invalid creds) configuration
-        # But connection error might be 500.
-        # Let's return 400 for logic/auth errors mostly.
+        # Return 400 with error details so frontend can display it nicely
         raise HTTPException(status_code=400, detail=str(e))
