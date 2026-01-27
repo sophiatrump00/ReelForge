@@ -62,9 +62,11 @@ const Download: React.FC = () => {
             } else {
                 message.warning('Unexpected response from server.');
             }
-        } catch (error: any) {
-            console.error(error);
-            message.error(error.response?.data?.detail || 'Failed to submit command.');
+        } catch (error) {
+            const err = error as Error; // Fix error type
+            console.error(err);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            message.error((err as any).response?.data?.detail || 'Failed to submit command.');
         } finally {
             setLoading(false);
         }

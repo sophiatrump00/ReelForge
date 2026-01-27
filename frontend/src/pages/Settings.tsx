@@ -13,6 +13,14 @@ interface CookiesConfig {
     lastChecked: string | null;
 }
 
+interface SettingsValues {
+    vendor?: string;
+    api_base?: string;
+    api_key?: string;
+    vl_model?: string;
+    [key: string]: string | undefined;
+}
+
 const Settings: React.FC = () => {
     const [form] = Form.useForm();
     const [testing, setTesting] = useState(false);
@@ -98,7 +106,7 @@ const Settings: React.FC = () => {
         return false;
     };
 
-    const handleSave = (values: any) => {
+    const handleSave = (values: SettingsValues) => {
         logger.userAction('Settings', 'save_config', values);
         console.log('Saved settings:', values);
         message.success('Configuration saved.');

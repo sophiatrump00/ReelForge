@@ -7,8 +7,20 @@ import logger from '../utils/logger';
 
 const getApiUrl = () => 'http://localhost:8000/api/v1';
 
+interface DashboardStats {
+    total_downloads: number;
+    processing: number;
+    completed: number;
+    storage_usage: string;
+    activity: Array<{
+        name: string;
+        downloads: number;
+        processed: number;
+    }>;
+}
+
 const Dashboard: React.FC = () => {
-    const [stats, setStats] = useState<any>(null);
+    const [stats, setStats] = useState<DashboardStats | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
