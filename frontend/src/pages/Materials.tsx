@@ -11,7 +11,8 @@ import {
 } from '@ant-design/icons';
 import logger from '../utils/logger';
 import FileBrowser from '../components/materials/FileBrowser';
-import FileDetailDrawer, { FileItem } from '../components/materials/FileDetailDrawer';
+import FileDetailDrawer from '../components/materials/FileDetailDrawer';
+import type { FileItem } from '../components/materials/FileDetailDrawer';
 
 const { Title } = Typography;
 
@@ -33,7 +34,7 @@ const Materials: React.FC = () => {
     const getCurrentFolder = (): FileItem | undefined => {
         let current: FileItem | undefined = fileSystem;
         for (let i = 1; i < currentPath.length && current; i++) {
-            current = current.children?.find(c => c.name === currentPath[i]);
+            current = current.children?.find((c: FileItem) => c.name === currentPath[i]);
         }
         return current;
     };
@@ -95,7 +96,7 @@ const Materials: React.FC = () => {
                     <Button
                         type="primary"
                         icon={<ThunderboltOutlined />}
-                        disabled={files.filter(f => f.type === 'video').length === 0}
+                        disabled={files.filter((f: FileItem) => f.type === 'video').length === 0}
                     >
                         Analyze All
                     </Button>

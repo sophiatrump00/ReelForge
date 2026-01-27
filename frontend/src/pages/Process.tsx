@@ -16,8 +16,10 @@ import {
 import { ThunderboltOutlined } from '@ant-design/icons';
 import logger from '../utils/logger';
 import ProcessPlacementSelector from '../components/process/ProcessPlacementSelector';
-import ProcessClipSettings, { ClipSettings } from '../components/process/ProcessClipSettings';
-import ProcessQueue, { ProcessTask } from '../components/process/ProcessQueue';
+import ProcessClipSettings from '../components/process/ProcessClipSettings';
+import type { ClipSettings } from '../components/process/ProcessClipSettings';
+import ProcessQueue from '../components/process/ProcessQueue';
+import type { ProcessTask } from '../components/process/ProcessQueue';
 
 const { Title, Text } = Typography;
 

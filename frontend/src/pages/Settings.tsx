@@ -3,7 +3,8 @@ import { Tabs, Form, Card, message } from 'antd';
 import { RobotOutlined, FolderOpenOutlined, SettingOutlined, FileTextOutlined } from '@ant-design/icons';
 import logger from '../utils/logger';
 import AIConfigTab from '../components/settings/AIConfigTab';
-import DownloadSettingsTab, { CookiesConfig } from '../components/settings/DownloadSettingsTab';
+import DownloadSettingsTab from '../components/settings/DownloadSettingsTab';
+import type { CookiesConfig } from '../utils/api';
 import StorageTab from '../components/settings/StorageTab';
 import LoggingTab from '../components/settings/LoggingTab';
 
@@ -53,7 +54,7 @@ const Settings: React.FC = () => {
             const isValid = cookiesConfig.content.trim().length > 0 &&
                 (cookiesConfig.content.includes('#') || cookiesConfig.content.includes('\t'));
 
-            setCookiesConfig(prev => ({
+            setCookiesConfig((prev: CookiesConfig) => ({
                 ...prev,
                 detectedSite: detectedSite !== 'unknown' ? detectedSite : 'tiktok',
                 isValid,
@@ -80,7 +81,7 @@ const Settings: React.FC = () => {
         reader.onload = (e) => {
             const content = e.target?.result as string;
             const detectedSite = detectSiteFromCookies(content);
-            setCookiesConfig(prev => ({
+            setCookiesConfig((prev: CookiesConfig) => ({
                 ...prev,
                 content,
                 detectedSite: detectedSite !== 'unknown' ? detectedSite : 'tiktok',
@@ -88,14 +89,14 @@ const Settings: React.FC = () => {
                 lastChecked: null,
             }));
             logger.userAction('Settings', 'upload_cookies', { size: content.length, detectedSite });
-            message.info(`Cookies file loaded. Detected site: ${detectedSite}`);
+            message.info(`Cookies file loaded.Detected site: ${detectedSite} `);
         };
         reader.readAsText(file);
         return false;
     };
 
     const handleSave = (values: SettingsValues) => {
-        logger.userAction('Settings', 'save_config', values);
+        logger.userAction('Settings', 'save_config', values as unknown as Record<string, unknown>);
         console.log('Saved settings:', values);
         message.success('Configuration saved.');
     };

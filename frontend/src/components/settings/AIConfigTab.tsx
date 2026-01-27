@@ -1,7 +1,7 @@
 import React from 'react';
 import { Form, Input, Button, Select, Row, Col, Space } from 'antd';
 import { ApiOutlined } from '@ant-design/icons';
-import { FormInstance } from 'antd/es/form';
+import type { FormInstance } from 'antd/es/form';
 
 interface SettingsValues {
     vendor?: string;

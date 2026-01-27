@@ -76,7 +76,7 @@ const Dashboard: React.FC = () => {
                         <Statistic
                             title="Processing"
                             value={stats?.processing || 0}
-                            prefix={<SyncOutlined spin={stats?.processing > 0} />}
+                            prefix={<SyncOutlined spin={(stats?.processing || 0) > 0} />}
                             valueStyle={{ color: '#007acc' }}
                         />
                     </Card>

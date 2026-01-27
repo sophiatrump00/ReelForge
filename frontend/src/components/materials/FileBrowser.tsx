@@ -12,7 +12,7 @@ import {
     CheckCircleOutlined,
     CloseCircleOutlined
 } from '@ant-design/icons';
-import { FileItem } from './FileDetailDrawer';
+import type { FileItem } from './FileDetailDrawer';
 
 const { Text } = Typography;
 
