@@ -13,6 +13,7 @@ interface SettingsValues {
     api_base?: string;
     api_key?: string;
     vl_model?: string;
+    cookies_path?: string;
 }
 
 const Settings: React.FC = () => {
@@ -21,19 +22,21 @@ const Settings: React.FC = () => {
     const [cookiesConfig, setCookiesConfig] = useState<CookiesConfig>({
         path: '/app/data/cookies.txt',
         content: '',
-        detectedSite: 'tiktok',
+        detectedSite: 'unknown',
         isValid: false,
         lastChecked: null,
     });
     const [maxProcesses, setMaxProcesses] = useState(4);
     const [checkingCookies, setCheckingCookies] = useState(false);
     const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'info' | 'warning' | 'error', message: string, description?: string } | null>(null);
+    const [pendingCookieFile, setPendingCookieFile] = useState<File | null>(null);
+    const [isUpdatingCookies, setIsUpdatingCookies] = useState(false);
 
     // Load Settings
     React.useEffect(() => {
         const loadSettings = async () => {
             try {
-                const res = await fetch('/api/v1/settings');
+                const res = await fetch('/api/v1/settings/');
                 if (res.ok) {
                     const data = await res.json();
                     form.setFieldsValue({
@@ -42,6 +45,31 @@ const Settings: React.FC = () => {
                         api_key: data.api_key,
                         vl_model: data.vl_model
                     });
+
+                    let loadedPath = '/app/data/cookies.txt';
+                    if (data.cookies_path) {
+                        loadedPath = data.cookies_path;
+                        setCookiesConfig(prev => ({ ...prev, path: data.cookies_path }));
+                    }
+
+                    // Fetch cookies content
+                    try {
+                        const cookiesRes = await fetch('/api/v1/settings/cookies');
+                        if (cookiesRes.ok) {
+                            const cookiesData = await cookiesRes.json();
+                            if (cookiesData.content) {
+                                const site = detectSiteFromCookies(cookiesData.content);
+                                setCookiesConfig(prev => ({
+                                    ...prev,
+                                    path: loadedPath,
+                                    content: cookiesData.content,
+                                    detectedSite: site
+                                }));
+                            }
+                        }
+                    } catch (err) {
+                        console.error("Failed to load cookies content", err);
+                    }
                 }
             } catch (e) {
                 logger.error('Settings', 'load_config', 'Failed to load settings', e as Error);
@@ -71,27 +99,27 @@ const Settings: React.FC = () => {
         logger.userAction('Settings', 'check_cookies', { path: cookiesConfig.path });
 
         try {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            const detectedSite = detectSiteFromCookies(cookiesConfig.content);
-            const isValid = cookiesConfig.content.trim().length > 0 &&
-                (cookiesConfig.content.includes('#') || cookiesConfig.content.includes('\t'));
+            const res = await fetch('/api/v1/settings/cookies/validate', {
+                method: 'POST'
+            });
+            const data = await res.json();
 
-            setCookiesConfig((prev: CookiesConfig) => ({
-                ...prev,
-                detectedSite: detectedSite !== 'unknown' ? detectedSite : 'tiktok',
-                isValid,
-                lastChecked: new Date().toLocaleString(),
-            }));
-
-            if (isValid) {
-                logger.info('Settings', 'cookies_valid', `Cookies validated for ${detectedSite}`);
-                message.success(`Cookies validated for ${detectedSite}`);
+            if (res.ok && data.status === 'valid') {
+                setCookiesConfig(prev => ({
+                    ...prev,
+                    isValid: true,
+                    lastChecked: new Date().toLocaleString(),
+                    detectedSite: prev.detectedSite
+                }));
+                logger.info('Settings', 'cookies_valid', `Cookies validated`);
+                message.success(`Cookies validated`);
             } else {
-                logger.warn('Settings', 'cookies_invalid', 'Invalid cookies format');
-                message.warning('Invalid cookies format. Please check the file content.');
+                setCookiesConfig(prev => ({ ...prev, isValid: false }));
+                logger.warn('Settings', 'cookies_invalid', 'Invalid cookies');
+                message.warning(data.detail || 'Invalid cookies file');
             }
         } catch (error) {
-            logger.apiError('Settings', 'POST', '/api/v1/cookies/validate', error as Error);
+            logger.apiError('Settings', 'POST', '/api/v1/settings/cookies/validate', error as Error);
             message.error('Failed to validate cookies');
         } finally {
             setCheckingCookies(false);
@@ -99,27 +127,69 @@ const Settings: React.FC = () => {
     };
 
     const handleCookiesUpload = (file: File): boolean => {
+        setPendingCookieFile(file);
+
+        // Read file content for preview & detection
         const reader = new FileReader();
         reader.onload = (e) => {
             const content = e.target?.result as string;
-            const detectedSite = detectSiteFromCookies(content);
-            setCookiesConfig((prev: CookiesConfig) => ({
-                ...prev,
-                content,
-                detectedSite: detectedSite !== 'unknown' ? detectedSite : 'tiktok',
-                isValid: false,
-                lastChecked: null,
-            }));
-            logger.userAction('Settings', 'upload_cookies', { size: content.length, detectedSite });
-            message.info(`Cookies file loaded.Detected site: ${detectedSite} `);
+            if (content) {
+                const site = detectSiteFromCookies(content);
+                setCookiesConfig(prev => ({
+                    ...prev,
+                    content: content,
+                    detectedSite: site
+                }));
+            }
         };
         reader.readAsText(file);
+
+        message.info({ content: 'File selected. Click "Confirm Update" to save.', key: 'uploadKey' });
         return false;
+    };
+
+    const handleUpdateCookies = async () => {
+        setIsUpdatingCookies(true);
+        const formData = new FormData();
+
+        if (pendingCookieFile) {
+            formData.append('file', pendingCookieFile);
+        } else if (cookiesConfig.content) {
+            const blob = new Blob([cookiesConfig.content], { type: 'text/plain' });
+            formData.append('file', blob, 'cookies.txt');
+        } else {
+            message.error("No content to update");
+            setIsUpdatingCookies(false);
+            return;
+        }
+
+        try {
+            message.loading({ content: 'Updating cookies...', key: 'uploadKey' });
+            const res = await fetch('/api/v1/settings/cookies', { method: 'POST', body: formData });
+            if (res.ok) {
+                const data = await res.json();
+                message.success({ content: 'Cookies updated successfully', key: 'uploadKey' });
+                setPendingCookieFile(null);
+                setCookiesConfig(prev => ({
+                    ...prev,
+                    path: data.path,
+                    isValid: true
+                }));
+                checkCookies();
+            } else {
+                throw new Error("Update failed");
+            }
+        } catch (e) {
+            message.error({ content: 'Failed to update cookies', key: 'uploadKey' });
+            logger.error('Settings', 'update_cookies', 'Failed', e as Error);
+        } finally {
+            setIsUpdatingCookies(false);
+        }
     };
 
     const handleSave = async (values: SettingsValues) => {
         try {
-            const res = await fetch('/api/v1/settings', {
+            const res = await fetch('/api/v1/settings/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(values)
@@ -242,6 +312,9 @@ const Settings: React.FC = () => {
                 onCheckCookies={checkCookies}
                 onCookiesUpload={handleCookiesUpload}
                 detectSiteFromCookies={detectSiteFromCookies}
+                pendingCookieFile={pendingCookieFile}
+                onUpdateCookies={handleUpdateCookies}
+                isUpdatingCookies={isUpdatingCookies}
             />,
         },
         {

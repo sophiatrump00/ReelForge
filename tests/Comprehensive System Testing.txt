@@ -1,0 +1,10 @@
+Comprehensive System Testing
+ AI Vend ： SiliconFlow
+ API Base URL: https://api.siliconflow.cn/v1
+  API Key ：sk-beacxmigqckodjjirpawbfsvqpuoougaomcwgmvisrdqqjku
+Vision Model ID：Qwen/Qwen3-VL-8B-Instruct
+Target URL:https://www.tiktok.com/@taibifindss
+Cookies File:cookies.txt
+Source Video File:来自于Target URL下载的全部视频
+ Scoring Keywords:Positive Keywords：oopbuy
+Negative：cnfans，

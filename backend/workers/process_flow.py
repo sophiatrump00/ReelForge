@@ -13,7 +13,7 @@ from backend.services.config_service import ConfigService
 
 
 @task
-def analyze_content(video_path: str):
+def analyze_content(video_path: str, ad_goal: str = None):
     settings = ConfigService.load_settings()
     config = AIProviderConfig(
         provider_name=settings.vendor,
@@ -24,7 +24,7 @@ def analyze_content(video_path: str):
     ai = AIService(config)
     vp = VideoProcessor()
     step1 = Step1ContentAnalysis(ai, vp)
-    return asyncio.run(step1.run(video_path))
+    return asyncio.run(step1.run(video_path, ad_goal=ad_goal))
 
 @task
 def score_segments(timeline_mock: List[Dict]):
@@ -46,17 +46,23 @@ def generate_clips(video_path: str, segments: List[Dict], output_dir: str):
     return asyncio.run(step5.run(video_path, segments, output_dir))
 
 @flow(name="video_processing_pipeline")
-def video_processing_flow(video_path: str, output_dir: str):
+def video_processing_flow(video_path: str, output_dir: str, ad_goal: str = None):
     logger = get_run_logger()
-    logger.info(f"Starting processing pipeline for {video_path}")
+    logger.info(f"Starting processing for {video_path} with goal: {ad_goal}")
     
-    # 1. Content Analysis
-    analysis_result = analyze_content(video_path)
+    # 1. Content Analysis (includes AI Filtering)
+    analysis_result = analyze_content(video_path, ad_goal=ad_goal)
     logger.info(f"Analysis complete: {analysis_result}")
     
-    # 1. Content Analysis
-    analysis_result = analyze_content(video_path)
-    logger.info(f"Analysis complete: {analysis_result}")
+    # Check Filter Status
+    if analysis_result.get("filter_status") == "rejected":
+        reason = analysis_result.get("reason", "Filtered by AI")
+        logger.warning(f"Video rejected by AI Filter: {reason}")
+        return {
+            "status": "filtered",
+            "reason": reason,
+            "clips": []
+        }
     
     # In real flow, Step 2 would produce this list based on Step 1
     # For now, we rely on Step 1 output if it returns timeline, or we parse it.

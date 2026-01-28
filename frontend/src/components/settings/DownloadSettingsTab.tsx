@@ -1,6 +1,6 @@
 import React from 'react';
 import { Form, Input, Button, Card, Alert, Upload, Tag, Row, Col, Space, InputNumber } from 'antd';
-import { UploadOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, CloseCircleOutlined, InboxOutlined } from '@ant-design/icons';
 import logger from '../../utils/logger';
 
 const { TextArea } = Input;
@@ -22,6 +22,9 @@ interface DownloadSettingsTabProps {
     onCheckCookies: () => void;
     onCookiesUpload: (file: File) => boolean;
     detectSiteFromCookies: (content: string) => string;
+    pendingCookieFile: File | null;
+    onUpdateCookies: () => void;
+    isUpdatingCookies: boolean;
 }
 
 const cardStyle = {
@@ -39,6 +42,9 @@ const DownloadSettingsTab: React.FC<DownloadSettingsTabProps> = ({
     onCheckCookies,
     onCookiesUpload,
     detectSiteFromCookies,
+    pendingCookieFile,
+    onUpdateCookies,
+    isUpdatingCookies,
 }) => {
     return (
         <div>
@@ -83,24 +89,44 @@ const DownloadSettingsTab: React.FC<DownloadSettingsTabProps> = ({
                     />
                 </Form.Item>
 
+                <Upload.Dragger
+                    accept=".txt"
+                    showUploadList={false}
+                    beforeUpload={onCookiesUpload}
+                    style={{ marginBottom: 16, background: '#1e1e1e', borderColor: '#3c3c3c' }}
+                >
+                    <p className="ant-upload-drag-icon">
+                        <InboxOutlined style={{ color: '#0969da' }} />
+                    </p>
+                    <p className="ant-upload-text" style={{ color: '#d4d4d4' }}>Click or drag cookies.txt file to this area to upload</p>
+                    <p className="ant-upload-hint" style={{ color: '#888' }}>
+                        Supports Netscape HTTP Cookie File format
+                    </p>
+                    {pendingCookieFile && (
+                        <div style={{ marginTop: 8, color: '#52c41a' }}>
+                            <CheckCircleOutlined /> Staged: {pendingCookieFile.name}
+                        </div>
+                    )}
+                </Upload.Dragger>
+
                 <Row gutter={16} align="middle">
                     <Col>
-                        <Upload
-                            accept=".txt"
-                            showUploadList={false}
-                            beforeUpload={onCookiesUpload}
-                        >
-                            <Button icon={<UploadOutlined />}>Upload cookies.txt</Button>
-                        </Upload>
-                    </Col>
-                    <Col>
-                        <Button
-                            type="primary"
-                            onClick={onCheckCookies}
-                            loading={checkingCookies}
-                        >
-                            Validate Cookies
-                        </Button>
+                        <Space>
+                            <Button
+                                type="primary"
+                                onClick={onUpdateCookies}
+                                loading={isUpdatingCookies}
+                                disabled={!pendingCookieFile && !cookiesConfig.content}
+                            >
+                                Confirm Update
+                            </Button>
+                            <Button
+                                onClick={onCheckCookies}
+                                loading={checkingCookies}
+                            >
+                                Validate Schema
+                            </Button>
+                        </Space>
                     </Col>
                     <Col flex="auto">
                         <Space>

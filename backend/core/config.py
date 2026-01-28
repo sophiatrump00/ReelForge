@@ -1,6 +1,9 @@
 from typing import List
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import AnyHttpUrl, validator
+import os
+from pathlib import Path
+
 
 class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
@@ -35,3 +38,19 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True, extra="ignore")
 
 settings = Settings()
+
+def get_data_dir() -> Path:
+    """
+    Get the absolute path to the data directory.
+    Prioritizes /app/data (Docker), falls back to local relative path.
+    """
+    # Docker path
+    docker_data = Path("/app/data")
+    if docker_data.exists():
+        return docker_data
+    
+    # Local path: backend/core/config.py -> ../../data
+    local_data = Path(__file__).resolve().parent.parent.parent / "data"
+    local_data.mkdir(parents=True, exist_ok=True)
+    return local_data
+

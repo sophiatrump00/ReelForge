@@ -172,7 +172,7 @@ const MainLayout: React.FC = () => {
               <Button
                 type="text"
                 icon={<GithubOutlined />}
-                href="https://github.com/deepmind/reelforge"
+                href="https://github.com/sophiatrump00/ReelForge"
                 target="_blank"
                 style={{ color: vsCodeTheme.textPrimary }}
               />

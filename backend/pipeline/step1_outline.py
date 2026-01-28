@@ -10,7 +10,7 @@ class Step1ContentAnalysis:
         self.ai = ai_service
         self.vp = video_processor
 
-    async def run(self, video_path: str) -> Dict:
+    async def run(self, video_path: str, ad_goal: str = None, keywords: Dict = None) -> Dict:
         """
         Extract video outline/content structure.
         Strategy: Extract frames at intervals -> AI Vision Analysis -> Summarize
@@ -21,21 +21,36 @@ class Step1ContentAnalysis:
         logger.info(f"Extracted {len(frames)} frames for analysis")
         
         # 2. AI Vision Analysis
-        prompt = """
+        
+        # Construct Prompt based on inputs
+        base_prompt = """
         Analyze this video content based on the provided frames.
         1. Summarize the main topic.
         2. Identify key segments/chapters with estimated timestamps (start/end) based on visual changes.
-        3. Return JSON format with keys: "summary", "topic", "segments" (list of {start, end, topic}).
+        """
+        
+        goal_prompt = ""
+        if ad_goal:
+            goal_prompt = f"""
+            3. Evaluate if this video aligns with the Target Ad Goal: "{ad_goal}".
+               - If it aligns, set "filter_status" to "accepted".
+               - If not, set "filter_status" to "rejected".
+               - Provide a "reason".
+            """
+        
+        format_prompt = """
+        4. Return JSON format with keys: 
+           "summary", "topic", "segments" (list of {start, end, topic}), 
+           "filter_status" (accepted/rejected), "reason".
         Assume the video is roughly X minutes long and map frames to timeline.
         """
         
+        full_prompt = base_prompt + goal_prompt + format_prompt
+        
         try:
-            analysis = await self.ai.analyze_images(frames, prompt=prompt)
+            analysis = await self.ai.analyze_images(frames, prompt=full_prompt)
             # Note: analyze_images returns a string (usually JSON string if requested).
-            # We might need to parse it. For now, we assume AI follows instruction or we wrap it in a struct.
-            # Ideally, we should parse the JSON from 'analysis'.
             
-            # For robustness, we return the raw text if parsing fails, or try to parse
             import json
             import re
             
@@ -44,6 +59,11 @@ class Step1ContentAnalysis:
             if match:
                 try:
                     result = json.loads(match.group(0))
+                    
+                    # Ensure filter status fields exist
+                    if "filter_status" not in result:
+                        result["filter_status"] = "accepted" # Default to accept if AI didn't specify
+                    
                     return result
                 except:
                     pass
@@ -52,12 +72,16 @@ class Step1ContentAnalysis:
             return {
                 "summary": analysis,
                 "topics": ["auto-generated"],
-                "segments": []
+                "segments": [],
+                "filter_status": "accepted", # Fallback
+                "reason": "Could not parse AI response"
             }
         except Exception as e:
             logger.error(f"AI Analysis failed: {e}")
             return {
                 "summary": "Analysis failed",
                 "topics": [],
-                "segments": []
+                "segments": [],
+                "filter_status": "rejected",
+                "reason": f"Analysis failed: {str(e)}"
             }

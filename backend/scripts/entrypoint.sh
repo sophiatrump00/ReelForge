@@ -18,8 +18,14 @@ echo "Initializing databases..."
 ls -R /app/backend/db/ || echo "Directory /app/backend/db/ MISSING"
 python /app/backend/db/init_db.py
 
-# Run migrations (todo)
-# alembic upgrade head
+# Run migrations
+echo "Running Alembic migrations..."
+# Check if alembic.ini exists (it should)
+alembic -c backend/alembic.ini upgrade head
+
+# Initialize Data (Migrate JSON to DB)
+echo "Initializing data..."
+python backend/scripts/init_data.py
 
 # Start app
 echo "Starting FastAPI..."

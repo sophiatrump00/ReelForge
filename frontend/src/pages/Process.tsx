@@ -64,11 +64,15 @@ const Process: React.FC = () => {
         marginBottom: 16,
     };
 
+    // AI Ad Goal
+    const [adGoal, setAdGoal] = useState('');
+
     const startProcessing = () => {
         logger.userAction('Process', 'start_processing', {
             placements: selectedPlacements,
             exportHighlightFrames,
-            clipSettings
+            clipSettings,
+            adGoal // Log adGoal
         });
         message.info('Processing task submitted to queue');
     };
@@ -142,6 +146,20 @@ const Process: React.FC = () => {
 
                     {/* Auto-clip Settings */}
                     <ProcessClipSettings clipSettings={clipSettings} setClipSettings={setClipSettings} />
+
+                    {/* AI Ad Goal Filtering */}
+                    <Card title="AI Ad Goal Filtering" style={cardStyle}>
+                        <Input.TextArea
+                            rows={3}
+                            placeholder="e.g. Promote purchase website, Showcase outdoor hiking gear"
+                            value={adGoal}
+                            onChange={(e) => setAdGoal(e.target.value)}
+                            style={{ marginBottom: 8 }}
+                        />
+                        <div style={{ color: '#666', fontSize: 12 }}>
+                            Optional: If keywords don't match, AI will use this goal to decide whether to keep the video.
+                        </div>
+                    </Card>
 
                     {/* Keyword Detection */}
                     <Card
