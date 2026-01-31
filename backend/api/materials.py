@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from backend.db.session import get_db
 from backend.services.material_service import MaterialService
-from backend.services.material_service import MaterialService
+from backend.services.archive_service import ArchiveService
 from pydantic import BaseModel
 import os
 from typing import List, Optional
@@ -69,13 +69,7 @@ def read_materials(skip: int = 0, limit: int = 100, status: Optional[str] = None
     service = MaterialService(db)
     return service.get_materials(skip=skip, limit=limit, status=status)
 
-@router.get("/{material_id}", response_model=MaterialOut)
-def read_material(material_id: int, db: Session = Depends(get_db)):
-    service = MaterialService(db)
-    item = service.get_material(material_id)
-    if not item:
-        raise HTTPException(status_code=404, detail="Material not found")
-    return item
+
 
 @router.get("/files/scan", response_model=FileNode)
 def scan_files():
@@ -96,3 +90,53 @@ def scan_files():
         path="",
         children=children
     )
+
+
+# ============ Download Archive Endpoints ============
+
+@router.get("/archive")
+def get_archive_entries(skip: int = 0, limit: int = 100, search: Optional[str] = None):
+    """Get download archive entries with pagination and search."""
+    return ArchiveService.get_entries(skip=skip, limit=limit, search=search)
+
+
+@router.get("/archive/status")
+def get_archive_status():
+    """Get download archive status."""
+    return ArchiveService.get_status()
+
+
+@router.post("/archive/sync")
+def sync_archive_from_file():
+    """Sync entries from archive.txt file to database."""
+    return ArchiveService.sync_from_file()
+
+
+@router.delete("/archive/{entry_id}")
+def delete_archive_entry(entry_id: int):
+    """Delete an archive entry."""
+    result = ArchiveService.delete_entry(entry_id)
+    if result["status"] == "not_found":
+        raise HTTPException(status_code=404, detail="Entry not found")
+    return result
+
+
+@router.delete("/archive")
+def clear_archive():
+    """Clear all archive entries."""
+    return ArchiveService.clear_all()
+
+
+@router.get("/archive/export")
+def export_archive():
+    """Export archive to file and return path."""
+    path = ArchiveService.export_to_file()
+    return {"status": "exported", "path": path}
+
+@router.get("/{material_id}", response_model=MaterialOut)
+def read_material(material_id: int, db: Session = Depends(get_db)):
+    service = MaterialService(db)
+    item = service.get_material(material_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Material not found")
+    return item

@@ -11,6 +11,7 @@ class SettingsModel(BaseModel):
     api_key: str = ""
     vl_model: str = "gpt-4-vision-preview"
     cookies_path: str = "/app/data/cookies.txt"
+    proxy_url: str = ""  # Optional proxy for yt-dlp downloads
 
 class ConfigService:
     @staticmethod
@@ -27,7 +28,8 @@ class ConfigService:
                 api_base=settings_db.api_base,
                 api_key=settings_db.api_key or "",
                 vl_model=settings_db.vl_model,
-                cookies_path=settings_db.cookies_path or "/app/data/cookies.txt"
+                cookies_path=settings_db.cookies_path or "/app/data/cookies.txt",
+                proxy_url=settings_db.extra.get("proxy_url", "") if settings_db.extra else ""
             )
         except Exception as e:
             logger.error(f"Failed to load settings from DB: {e}")
@@ -50,6 +52,7 @@ class ConfigService:
             db_obj.api_key = settings.api_key
             db_obj.vl_model = settings.vl_model
             db_obj.cookies_path = settings.cookies_path
+            db_obj.extra = {"proxy_url": settings.proxy_url}
             
             db.commit()
             logger.info("Settings saved to DB.")

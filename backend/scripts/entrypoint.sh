@@ -13,20 +13,23 @@ echo "PostgreSQL started"
 
 # Init DB
 echo "Initializing databases..."
-# Init DB
-echo "Initializing databases..."
 ls -R /app/backend/db/ || echo "Directory /app/backend/db/ MISSING"
+# Use absolute path/module for init_db to be safe or relative if we cd
 python /app/backend/db/init_db.py
+
+# Switch to backend directory for Alembic and App execution
+cd /app/backend
 
 # Run migrations
 echo "Running Alembic migrations..."
-# Check if alembic.ini exists (it should)
-alembic -c backend/alembic.ini upgrade head
+# alembic.ini is in /app/backend, so we can just run alembic
+alembic upgrade head
 
 # Initialize Data (Migrate JSON to DB)
 echo "Initializing data..."
-python backend/scripts/init_data.py
+python scripts/init_data.py
 
 # Start app
 echo "Starting FastAPI..."
-exec uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+# Run from within backend package, but keep pythonpath set to /app so 'backend' module is resolvable
+exec uvicorn main:app --host 0.0.0.0 --port 8000 --reload

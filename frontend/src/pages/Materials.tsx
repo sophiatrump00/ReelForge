@@ -4,14 +4,18 @@ import {
     Breadcrumb,
     Typography,
     Space,
+    Tabs,
 } from 'antd';
 import {
     CloudSyncOutlined,
     ThunderboltOutlined,
+    FolderOutlined,
+    HistoryOutlined,
 } from '@ant-design/icons';
 import logger from '../utils/logger';
 import FileBrowser from '../components/materials/FileBrowser';
 import FileDetailDrawer from '../components/materials/FileDetailDrawer';
+import DownloadArchiveTab from '../components/materials/DownloadArchiveTab';
 import type { FileItem } from '../components/materials/FileDetailDrawer';
 
 const { Title } = Typography;
@@ -23,7 +27,7 @@ const emptyFileSystem: FileItem = {
     children: []
 };
 
-const Materials: React.FC = () => {
+const FileBrowserTab: React.FC = () => {
     const [fileSystem, setFileSystem] = useState<FileItem>(emptyFileSystem);
     const [loading, setLoading] = useState(false);
     const [currentPath, setCurrentPath] = useState<string[]>(['data']);
@@ -66,9 +70,6 @@ const Materials: React.FC = () => {
                 const data = await response.json();
                 setFileSystem(data);
                 logger.apiResponse('Materials', 'GET', '/api/v1/materials/files/scan', 200);
-                // If current path is invalid in new tree, reset to root
-                // For simplicity, we just keep current path or reset if needed.
-                // Here we keep it.
             } else {
                 logger.apiResponse('Materials', 'GET', '/api/v1/materials/files/scan', response.status);
             }
@@ -89,10 +90,10 @@ const Materials: React.FC = () => {
     const files = currentFolder?.children || [];
 
     return (
-        <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '0 24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <div>
-                    <Title level={4} style={{ margin: 0, marginBottom: 8 }}>Materials Library</Title>
+                    <Title level={4} style={{ margin: 0, marginBottom: 8 }}>Files</Title>
                     <Breadcrumb
                         items={currentPath.map((p, index) => ({
                             key: p,
@@ -133,6 +134,43 @@ const Materials: React.FC = () => {
                 open={drawerOpen}
                 onClose={() => setDrawerOpen(false)}
                 file={selectedFile}
+            />
+        </div>
+    );
+};
+
+const Materials: React.FC = () => {
+    const items = [
+        {
+            key: 'files',
+            label: (
+                <span>
+                    <FolderOutlined />
+                    File Browser
+                </span>
+            ),
+            children: <FileBrowserTab />
+        },
+        {
+            key: 'archive',
+            label: (
+                <span>
+                    <HistoryOutlined />
+                    Download Archive
+                </span>
+            ),
+            children: <DownloadArchiveTab />
+        }
+    ];
+
+    return (
+        <div style={{ height: '100%' }}>
+            <h1 style={{ color: 'white', marginBottom: 16, paddingLeft: 24 }}>Materials Library</h1>
+            <Tabs
+                defaultActiveKey="files"
+                items={items}
+                style={{ height: 'calc(100% - 50px)' }}
+                tabBarStyle={{ paddingLeft: 24 }}
             />
         </div>
     );

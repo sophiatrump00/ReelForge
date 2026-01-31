@@ -2,14 +2,10 @@ import React, { useState } from 'react';
 import {
     Card,
     Typography,
-    Checkbox,
-    Radio,
     Button,
-    Space,
     Row,
     Col,
     Input,
-    Switch,
     message,
     Alert,
 } from 'antd';
@@ -20,6 +16,11 @@ import ProcessClipSettings from '../components/process/ProcessClipSettings';
 import type { ClipSettings } from '../components/process/ProcessClipSettings';
 import ProcessQueue from '../components/process/ProcessQueue';
 import type { ProcessTask } from '../components/process/ProcessQueue';
+import CropStrategySelector from '../components/process/CropStrategySelector';
+import type { CropStrategyState } from '../components/process/CropStrategySelector';
+import KeywordDetectionPanel from '../components/process/KeywordDetectionPanel';
+import type { KeywordDetectionState } from '../components/process/KeywordDetectionPanel';
+import NamingTemplatePanel from '../components/process/NamingTemplatePanel';
 
 const { Title, Text } = Typography;
 
@@ -29,7 +30,7 @@ const Process: React.FC = () => {
     const [exportHighlightFrames, setExportHighlightFrames] = useState(true);
 
     // Crop Strategy
-    const [cropStrategy, setCropStrategy] = useState({
+    const [cropStrategy, setCropStrategy] = useState<CropStrategyState>({
         '1x1': 'ai_smart',
         '4x5': 'top_align',
         '16x9': 'blur_bg',
@@ -46,7 +47,7 @@ const Process: React.FC = () => {
     });
 
     // Keyword Detection
-    const [keywordDetection, setKeywordDetection] = useState({
+    const [keywordDetection, setKeywordDetection] = useState<KeywordDetectionState>({
         enabled: true,
         removeNegative: true,
         keepPositive: true,
@@ -100,49 +101,7 @@ const Process: React.FC = () => {
                     />
 
                     {/* Crop Strategy */}
-                    <Card title="Crop Strategy" style={cardStyle}>
-                        <Row gutter={[16, 16]}>
-                            <Col span={8}>
-                                <Text strong style={{ display: 'block', marginBottom: 8 }}>9:16 → 1:1</Text>
-                                <Radio.Group
-                                    value={cropStrategy['1x1']}
-                                    onChange={(e) => setCropStrategy({ ...cropStrategy, '1x1': e.target.value })}
-                                >
-                                    <Space direction="vertical">
-                                        <Radio value="center">Center Crop</Radio>
-                                        <Radio value="ai_smart">AI Smart Crop</Radio>
-                                        <Radio value="manual">Manual</Radio>
-                                    </Space>
-                                </Radio.Group>
-                            </Col>
-                            <Col span={8}>
-                                <Text strong style={{ display: 'block', marginBottom: 8 }}>9:16 → 4:5</Text>
-                                <Radio.Group
-                                    value={cropStrategy['4x5']}
-                                    onChange={(e) => setCropStrategy({ ...cropStrategy, '4x5': e.target.value })}
-                                >
-                                    <Space direction="vertical">
-                                        <Radio value="top_align">Top Align</Radio>
-                                        <Radio value="center">Center Crop</Radio>
-                                        <Radio value="ai_smart">AI Smart Crop</Radio>
-                                    </Space>
-                                </Radio.Group>
-                            </Col>
-                            <Col span={8}>
-                                <Text strong style={{ display: 'block', marginBottom: 8 }}>9:16 → 16:9</Text>
-                                <Radio.Group
-                                    value={cropStrategy['16x9']}
-                                    onChange={(e) => setCropStrategy({ ...cropStrategy, '16x9': e.target.value })}
-                                >
-                                    <Space direction="vertical">
-                                        <Radio value="blur_bg">Blur Background</Radio>
-                                        <Radio value="pip">Picture-in-Picture</Radio>
-                                        <Radio value="solid_bg">Solid Background</Radio>
-                                    </Space>
-                                </Radio.Group>
-                            </Col>
-                        </Row>
-                    </Card>
+                    <CropStrategySelector cropStrategy={cropStrategy} setCropStrategy={setCropStrategy} />
 
                     {/* Auto-clip Settings */}
                     <ProcessClipSettings clipSettings={clipSettings} setClipSettings={setClipSettings} />
@@ -162,64 +121,10 @@ const Process: React.FC = () => {
                     </Card>
 
                     {/* Keyword Detection */}
-                    <Card
-                        title={
-                            <Space>
-                                <span>Keyword Detection</span>
-                                <Switch
-                                    size="small"
-                                    checked={keywordDetection.enabled}
-                                    onChange={(v) => setKeywordDetection({ ...keywordDetection, enabled: v })}
-                                />
-                            </Space>
-                        }
-                        style={cardStyle}
-                    >
-                        {keywordDetection.enabled ? (
-                            <Row gutter={[16, 16]}>
-                                <Col span={12}>
-                                    <Checkbox
-                                        checked={keywordDetection.removeNegative}
-                                        onChange={(e) => setKeywordDetection({ ...keywordDetection, removeNegative: e.target.checked })}
-                                    >
-                                        <Text type="danger">Auto-remove competitor segments</Text>
-                                    </Checkbox>
-                                    <div style={{ color: '#666', fontSize: 12, marginLeft: 24 }}>
-                                        Automatically trim segments containing negative keywords
-                                    </div>
-                                </Col>
-                                <Col span={12}>
-                                    <Checkbox
-                                        checked={keywordDetection.keepPositive}
-                                        onChange={(e) => setKeywordDetection({ ...keywordDetection, keepPositive: e.target.checked })}
-                                    >
-                                        <Text style={{ color: '#4ec9b0' }}>Keep brand segments</Text>
-                                    </Checkbox>
-                                    <div style={{ color: '#666', fontSize: 12, marginLeft: 24 }}>
-                                        Prioritize segments with positive keywords
-                                    </div>
-                                </Col>
-                            </Row>
-                        ) : (
-                            <Text type="secondary">Keyword detection disabled</Text>
-                        )}
-                    </Card>
+                    <KeywordDetectionPanel keywordDetection={keywordDetection} setKeywordDetection={setKeywordDetection} />
 
                     {/* Naming Template */}
-                    <Card title="Output Naming Template" style={cardStyle}>
-                        <Input
-                            value={namingTemplate}
-                            onChange={(e) => setNamingTemplate(e.target.value)}
-                            placeholder="{source}_{date}_{seq}_{placement}_{tag}"
-                            style={{ marginBottom: 12 }}
-                        />
-                        <div style={{ color: '#666', fontSize: 12 }}>
-                            Variables: <code>{'{source}'}</code> <code>{'{creator}'}</code> <code>{'{date}'}</code> <code>{'{time}'}</code> <code>{'{seq}'}</code> <code>{'{placement}'}</code> <code>{'{tag}'}</code> <code>{'{score}'}</code>
-                        </div>
-                        <div style={{ marginTop: 8, padding: 8, background: '#1e1e1e', borderRadius: 4, fontFamily: 'monospace' }}>
-                            Example: <Text code>tiktok_20260127_001_feed1x1_unboxing.mp4</Text>
-                        </div>
-                    </Card>
+                    <NamingTemplatePanel namingTemplate={namingTemplate} setNamingTemplate={setNamingTemplate} />
                 </Col>
 
                 {/* Right Column - Queue and Actions */}

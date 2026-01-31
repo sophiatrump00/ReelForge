@@ -6,9 +6,10 @@ from typing import Dict, Any, Optional, List, Callable
 logger = logging.getLogger(__name__)
 
 class VideoDownloader:
-    def __init__(self, output_dir: str = "/app/data/raw", cookies_path: Optional[str] = None):
+    def __init__(self, output_dir: str = "/app/data/raw", cookies_path: Optional[str] = None, proxy: Optional[str] = None):
         self.output_dir = output_dir
         self.cookies_path = cookies_path
+        self.proxy = proxy
 
     def download(self, 
                  url: str, 
@@ -40,6 +41,11 @@ class VideoDownloader:
         # Add cookies if provided
         if self.cookies_path and os.path.exists(self.cookies_path):
             ydl_opts['cookiefile'] = self.cookies_path
+            
+        # Add proxy if provided
+        if self.proxy:
+            ydl_opts['proxy'] = self.proxy
+
             
         # Merge user options
         if options:

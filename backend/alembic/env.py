@@ -10,6 +10,9 @@ from backend.db.session import Base
 # Import all models to ensure they are registered in metadata
 from backend.models.material import Material
 from backend.models.settings import Settings, Keyword
+from backend.models.batch_links import BatchLinks
+from backend.models.download_archive import DownloadArchive
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

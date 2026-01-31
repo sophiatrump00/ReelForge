@@ -2,8 +2,36 @@ import React, { useEffect, useState } from 'react';
 import { Form, Input, Card, Descriptions, Progress, Spin, Button, Modal, message, Space } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, FolderOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 
+interface DiskStats {
+    percent: number;
+    total_gb: number;
+    used_gb: number;
+    free_gb: number;
+    status: string;
+}
+
+interface PathStats {
+    path: string;
+    exists: boolean;
+    writable?: boolean;
+}
+
+interface CookieStats {
+    path: string;
+    exists: boolean;
+    valid: boolean;
+}
+
+interface SystemStatus {
+    storage: {
+        disk: DiskStats;
+        paths: Record<string, PathStats>;
+    };
+    cookies: CookieStats;
+}
+
 const StorageTab: React.FC = () => {
-    const [status, setStatus] = useState<any>(null);
+    const [status, setStatus] = useState<SystemStatus | null>(null);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -44,7 +72,7 @@ const StorageTab: React.FC = () => {
                     } else {
                         message.error('Cleanup failed');
                     }
-                } catch (e) {
+                } catch {
                     message.error('Error during cleanup');
                 }
             }
@@ -86,7 +114,7 @@ const StorageTab: React.FC = () => {
             {/* Paths */}
             <Card title="Storage Paths & Permissions" size="small" style={{ background: '#252526', border: '1px solid #3c3c3c', marginBottom: 16 }}>
                 <Form layout="vertical">
-                    {Object.entries(paths).map(([key, info]: [string, any]) => (
+                    {Object.entries(paths as Record<string, PathStats>).map(([key, info]) => (
                         <Form.Item key={key} label={key.toUpperCase()} style={{ marginBottom: 12 }}>
                             <Input
                                 prefix={<FolderOutlined style={{ color: '#888' }} />}

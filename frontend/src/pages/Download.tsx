@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Card, Form, Input, Button, message, Alert } from 'antd';
-import { CodeOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import { Card, Form, Input, Button, message, Alert, Tabs } from 'antd';
+import { CodeOutlined, PlayCircleOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import axios from 'axios';
+import BatchDownloadTab from '../components/download/BatchDownloadTab';
 
 const { TextArea } = Input;
 
@@ -11,7 +12,7 @@ interface DownloadFormValues {
     command: string;
 }
 
-const Download: React.FC = () => {
+const TerminalTab: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [form] = Form.useForm();
 
@@ -21,40 +22,22 @@ const Download: React.FC = () => {
             const { command } = values;
 
             // Simple parsing to extract URL (assuming last argument or finding http)
-            // In a real shell parser, this would be more robust.
-            // Here we just treat the whole line as the command arguments + URL
-            // We strip 'yt-dlp' if the user typed it.
             let args = command.trim();
             if (args.startsWith('yt-dlp ')) {
                 args = args.substring(7);
             }
 
             // Attempt to extract URL for the backend 'url' field requirement
-            // This is a naive extraction, assuming URL is present in the string
             const urlMatch = args.match(/(https?:\/\/[^\s]+)/);
             const url = urlMatch ? urlMatch[0] : "shell_command";
 
             const payload = {
                 url: url,
-                is_batch: false, // Shell mode implies manual control
+                is_batch: false,
                 options: {
-                    // Pass the full raw args string to a hypotetical backend field
-                    // Since existing backend expects specific fields, we might need to rely on 
-                    // the backend handling a special "custom_args" field or similar.
-                    // For now, we fit what we can, or assume backend is updated to handle 'shell_mode'.
-                    // To keep it compatible with the CURRENT backend 
-                    // (which expects max_downloads, remove_audio etc separately),
-                    // this frontend change assumes the BACKEND is also updated or we map basic args.
-
-                    // However, user asked for full shell control. 
-                    // We will send a special flag if backend supports it, or just send the raw string.
                     custom_args: args
                 }
             };
-
-            // NOTE: The current backend might NOT support 'custom_args'. 
-            // If this fails, we need to update backend or verify SPEC. 
-            // Assuming this is a prototype frontend update first.
 
             console.log("Sending payload:", payload);
 
@@ -67,7 +50,7 @@ const Download: React.FC = () => {
                 message.warning('Unexpected response from server.');
             }
         } catch (error) {
-            const err = error as Error; // Fix error type
+            const err = error as Error;
             console.error(err);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             message.error((err as any).response?.data?.detail || 'Failed to submit command.');
@@ -78,8 +61,6 @@ const Download: React.FC = () => {
 
     return (
         <div style={{ padding: 24, maxWidth: 900, margin: '0 auto' }}>
-            <h1 style={{ color: 'white', marginBottom: 24 }}>Terminal Download</h1>
-
             <Card bordered={false} style={{ background: '#141414' }}>
                 <Alert
                     message="Direct Shell Mode"
@@ -133,8 +114,46 @@ const Download: React.FC = () => {
                 <strong>Supported examples:</strong><br />
                 yt-dlp --write-subs --sub-lang en https://...<br />
                 yt-dlp --extract-audio --audio-format mp3 https://...<br />
-                yt-dlp --cookies cookies.txt https://...
+                yt-dlp --cookies cookies.txt https://...<br />
+                yt-dlp -a /app/data/links.txt  (use with Batch Mode)
             </div>
+        </div>
+    );
+};
+
+const Download: React.FC = () => {
+    const items = [
+        {
+            key: 'terminal',
+            label: (
+                <span>
+                    <CodeOutlined />
+                    Terminal Mode
+                </span>
+            ),
+            children: <TerminalTab />
+        },
+        {
+            key: 'batch',
+            label: (
+                <span>
+                    <UnorderedListOutlined />
+                    Batch Mode
+                </span>
+            ),
+            children: <BatchDownloadTab />
+        }
+    ];
+
+    return (
+        <div style={{ height: '100%' }}>
+            <h1 style={{ color: 'white', marginBottom: 16, paddingLeft: 24 }}>Download</h1>
+            <Tabs
+                defaultActiveKey="terminal"
+                items={items}
+                style={{ height: 'calc(100% - 50px)' }}
+                tabBarStyle={{ paddingLeft: 24 }}
+            />
         </div>
     );
 };

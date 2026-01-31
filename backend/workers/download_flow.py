@@ -4,13 +4,18 @@ from backend.schemas.task import DownloadRequest
 from typing import Dict, Any, List
 import os
 
+from backend.services.config_service import ConfigService
+
 @task(name="download_video_task", retries=3, retry_delay_seconds=10)
 def download_video_task(request: DownloadRequest) -> List[Dict]:
     logger = get_run_logger()
     logger.info(f"Starting download for URL: {request.url}")
     
+    settings = ConfigService.load_settings()
+    
     downloader = VideoDownloader(
-        cookies_path=request.cookies_path
+        cookies_path=request.cookies_path,
+        proxy=settings.proxy_url
     )
     
     # Progress hook to log progress

@@ -163,6 +163,22 @@ const DownloadSettingsTab: React.FC<DownloadSettingsTabProps> = ({
                     </span>
                 </Form.Item>
             </Card>
+
+            <Card title="Proxy Configuration" size="small" style={cardStyle}>
+                <Alert
+                    message="Optional"
+                    description="Configure a proxy server for yt-dlp downloads. Leave empty if not needed."
+                    type="info"
+                    showIcon
+                    style={{ marginBottom: 16, background: '#1e1e1e', border: '1px solid #4ec9b0' }}
+                />
+                <Form.Item label="Proxy URL" help="e.g., socks5://127.0.0.1:1080 or http://proxy.example.com:8080">
+                    <Input
+                        placeholder="socks5://127.0.0.1:1080"
+                        style={{ fontFamily: 'monospace' }}
+                    />
+                </Form.Item>
+            </Card>
         </div>
     );
 };
