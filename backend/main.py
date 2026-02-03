@@ -30,5 +30,24 @@ def health_check():
 
 from backend.api.api import api_router
 
+
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+# Configure logging
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler()]
+)
+
+# Mount static files for video preview
+from fastapi.staticfiles import StaticFiles
+import os
+
+# Ensure data directory exists
+os.makedirs("/app/data", exist_ok=True)
+
+# Mount /files to serve from /app/data
+app.mount("/files", StaticFiles(directory="/app/data"), name="files")
 

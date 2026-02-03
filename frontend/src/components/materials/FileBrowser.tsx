@@ -22,6 +22,8 @@ interface FileBrowserProps {
     onNavigateUp: () => void;
     onEnterFolder: (folderName: string) => void;
     onViewDetails: (file: FileItem) => void;
+    onPreview: (file: FileItem) => void;
+    onProcess: (file: FileItem) => void;
 }
 
 const cardStyle = {
@@ -29,14 +31,26 @@ const cardStyle = {
     border: '1px solid #3c3c3c',
 };
 
-const renderIcon = (type: string) => {
-    switch (type) {
-        case 'folder': return <FolderOutlined style={{ color: '#dcdcaa' }} />;
-        case 'video': return <VideoCameraOutlined style={{ color: '#4ec9b0' }} />;
-        case 'markdown': return <FileMarkdownOutlined style={{ color: '#569cd6' }} />;
-        case 'image': return <PictureOutlined style={{ color: '#ce9178' }} />;
-        default: return <FileOutlined />;
+const isVideoFile = (name: string) => {
+    const videoExts = ['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v'];
+    return videoExts.some(ext => name.toLowerCase().endsWith(ext));
+};
+
+const formatSize = (bytes: number) => {
+    if (bytes === 0) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const renderIcon = (file: FileItem) => {
+    if (file.type === 'folder') return <FolderOutlined style={{ color: '#dcdcaa' }} />;
+    if (isVideoFile(file.name)) return <VideoCameraOutlined style={{ color: '#4ec9b0' }} />;
+    if (file.name.endsWith('.md')) return <FileMarkdownOutlined style={{ color: '#569cd6' }} />;
+    if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].some(ext => file.name.toLowerCase().endsWith(ext))) {
+        return <PictureOutlined style={{ color: '#ce9178' }} />;
     }
+    return <FileOutlined />;
 };
 
 const getStatusBadge = (status?: string) => {
@@ -56,7 +70,9 @@ const FileBrowser: React.FC<FileBrowserProps> = ({
     files,
     onNavigateUp,
     onEnterFolder,
-    onViewDetails
+    onViewDetails,
+    onPreview,
+    onProcess
 }) => {
     return (
         <Card style={{ ...cardStyle, flex: 1, overflow: 'auto' }}>
@@ -80,66 +96,76 @@ const FileBrowser: React.FC<FileBrowserProps> = ({
             {files.length > 0 ? (
                 <List
                     dataSource={files}
-                    renderItem={(file) => (
-                        <List.Item
-                            style={{
-                                padding: '12px 16px',
-                                borderBottom: '1px solid #3c3c3c',
-                                cursor: file.type === 'folder' ? 'pointer' : 'default',
-                            }}
-                            onClick={() => file.type === 'folder' && onEnterFolder(file.name)}
-                            actions={file.type === 'video' ? [
-                                <Button
-                                    key="preview"
-                                    size="small"
-                                    icon={<PlayCircleOutlined />}
-                                >
-                                    Preview
-                                </Button>,
-                                <Button
-                                    key="details"
-                                    size="small"
-                                    icon={<EyeOutlined />}
-                                    onClick={(e) => { e.stopPropagation(); onViewDetails(file); }}
-                                >
-                                    Details
-                                </Button>,
-                                <Button
-                                    key="process"
-                                    size="small"
-                                    type="primary"
-                                    icon={<SendOutlined />}
-                                >
-                                    Process
-                                </Button>
-                            ] : undefined}
-                        >
-                            <List.Item.Meta
-                                avatar={renderIcon(file.type)}
-                                title={
-                                    <Space>
-                                        <Text>{file.name}</Text>
-                                        {file.type === 'video' && file.positiveKeywords && file.positiveKeywords.length > 0 && (
-                                            <Tag color="green" icon={<CheckCircleOutlined />}>
-                                                {file.positiveKeywords.length} match
-                                            </Tag>
-                                        )}
-                                        {file.type === 'video' && file.negativeKeywords && file.negativeKeywords.length > 0 && (
-                                            <Tag color="red" icon={<CloseCircleOutlined />}>
-                                                {file.negativeKeywords.length} alert
-                                            </Tag>
-                                        )}
-                                    </Space>
-                                }
-                                description={
-                                    <Space>
-                                        {file.size && <Text type="secondary">{file.size}</Text>}
-                                        {file.type === 'video' && getStatusBadge(file.status)}
-                                    </Space>
-                                }
-                            />
-                        </List.Item>
-                    )}
+                    renderItem={(file) => {
+                        const isVideo = isVideoFile(file.name);
+                        return (
+                            <List.Item
+                                style={{
+                                    padding: '12px 16px',
+                                    borderBottom: '1px solid #3c3c3c',
+                                    cursor: file.type === 'folder' ? 'pointer' : 'default',
+                                }}
+                                onClick={() => file.type === 'folder' && onEnterFolder(file.name)}
+                                actions={isVideo ? [
+                                    <Button
+                                        key="preview"
+                                        size="small"
+                                        icon={<PlayCircleOutlined />}
+                                        onClick={(e) => { e.stopPropagation(); onPreview(file); }}
+                                    >
+                                        Preview
+                                    </Button>,
+                                    <Button
+                                        key="details"
+                                        size="small"
+                                        icon={<EyeOutlined />}
+                                        onClick={(e) => { e.stopPropagation(); onViewDetails(file); }}
+                                    >
+                                        Details
+                                    </Button>,
+                                    <Button
+                                        key="process"
+                                        size="small"
+                                        type="primary"
+                                        icon={<SendOutlined />}
+                                        onClick={(e) => { e.stopPropagation(); onProcess(file); }}
+                                    >
+                                        Process
+                                    </Button>
+                                ] : undefined}
+                            >
+                                <List.Item.Meta
+                                    avatar={renderIcon(file)}
+                                    title={
+                                        <Space>
+                                            <Text>{file.name}</Text>
+                                            {isVideo && file.positiveKeywords && file.positiveKeywords.length > 0 && (
+                                                <Tag color="green" icon={<CheckCircleOutlined />}>
+                                                    {file.positiveKeywords.length} match
+                                                </Tag>
+                                            )}
+                                            {isVideo && file.negativeKeywords && file.negativeKeywords.length > 0 && (
+                                                <Tag color="red" icon={<CloseCircleOutlined />}>
+                                                    {file.negativeKeywords.length} alert
+                                                </Tag>
+                                            )}
+                                        </Space>
+                                    }
+                                    description={
+                                        <Space>
+                                            {file.type === 'folder' && file.children && (
+                                                <Text type="secondary">{file.children.length} items</Text>
+                                            )}
+                                            {file.type !== 'folder' && (
+                                                <Text type="secondary">{formatSize(typeof file.size === 'number' ? file.size : 0)}</Text>
+                                            )}
+                                            {isVideo && getStatusBadge(file.status)}
+                                        </Space>
+                                    }
+                                />
+                            </List.Item>
+                        );
+                    }}
                 />
             ) : (
                 <Empty

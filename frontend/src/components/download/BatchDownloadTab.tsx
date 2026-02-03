@@ -5,7 +5,7 @@ import axios from 'axios';
 
 const { TextArea } = Input;
 
-const getApiUrl = () => 'http://localhost:8000/api/v1';
+const getApiUrl = () => '/api/v1';
 
 interface BatchStatus {
     content: string;
@@ -15,17 +15,36 @@ interface BatchStatus {
 }
 
 const BatchDownloadTab: React.FC = () => {
-    const [content, setContent] = useState('');
+    const [content, setContent] = useState(() => {
+        return localStorage.getItem('batch_links_draft') || '';
+    });
     const [status, setStatus] = useState<BatchStatus | null>(null);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [running, setRunning] = useState(false);
 
+    // Persist content to localStorage
+    useEffect(() => {
+        localStorage.setItem('batch_links_draft', content);
+    }, [content]);
+
     const fetchContent = async () => {
         setLoading(true);
         try {
             const response = await axios.get(`${getApiUrl()}/download/batch/content`);
-            setContent(response.data.content || '');
+            // Only overwrite draft if it's empty, OR maybe we shouldn't overwrite automatically?
+            // Better UX: If server has content, we usually want to see it.
+            // But if user was typing and refreshed, we want their draft.
+            // Compomise: If draft differs from server, maybe keep draft? 
+            // Current approach: Server content overwrites draft on explicit refresh/load.
+            // BUT, if user just refreshed page, we want the draft. 
+            // Logic: process is 'init from LS' -> 'fetch from API' -> 'update state'. 
+            // If we want to preserve unsaved changes, we should conditionally setContent.
+
+            const serverContent = response.data.content || '';
+            if (serverContent) {
+                setContent(serverContent);
+            }
             setStatus(response.data);
         } catch (error) {
             console.error('Failed to fetch batch content:', error);
@@ -36,8 +55,40 @@ const BatchDownloadTab: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchContent();
+        // On mount, we load from LS (via useState init).
+        // Then we fetch from API. 
+        // If API returns data, it currently overwrites LS. This might cause data loss of unsaved changes if refreshing.
+        // Let's modify fetchContent to only load if it was an explicit refresh action, or check modification times?
+        // Actually, for now, let's trust the API as the source of truth, BUT
+        // the user specifically asked for "refresh content lost" fix.
+        // So we should NOT overwrite with API data if we have a local draft that is different?
+        // That's tricky.
+        // Simple fix: Don't auto-fetch on mount if we have local content.
+        if (!localStorage.getItem('batch_links_draft')) {
+            fetchContent();
+        } else {
+            // We have local data, but we still need status stats.
+            // So we fetch, but don't setContent?
+            // Let's refactor fetchContent to accept a boolean 'updateContent'.
+            fetchContentWithFlag(false);
+        }
     }, []);
+
+    const fetchContentWithFlag = async (updateContent: boolean = true) => {
+        setLoading(true);
+        try {
+            const response = await axios.get(`${getApiUrl()}/download/batch/content`);
+            if (updateContent) {
+                setContent(response.data.content || '');
+            }
+            setStatus(response.data);
+        } catch (error) {
+            console.error('Failed to fetch batch content:', error);
+            message.error('Failed to load batch links');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleSave = async () => {
         setSaving(true);
@@ -137,7 +188,7 @@ const BatchDownloadTab: React.FC = () => {
                 bordered={false}
                 style={{ background: '#141414', marginBottom: 16 }}
                 extra={
-                    <Button icon={<ReloadOutlined />} onClick={fetchContent} loading={loading} size="small">
+                    <Button icon={<ReloadOutlined />} onClick={() => fetchContentWithFlag(true)} loading={loading} size="small">
                         Refresh
                     </Button>
                 }

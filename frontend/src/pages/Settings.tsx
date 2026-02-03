@@ -56,7 +56,7 @@ const Settings: React.FC = () => {
 
                     // Fetch cookies content
                     try {
-                        const cookiesRes = await fetch('/api/v1/settings/cookies');
+                        const cookiesRes = await fetch('/api/v1/settings/cookies/');
                         if (cookiesRes.ok) {
                             const cookiesData = await cookiesRes.json();
                             if (cookiesData.content) {
@@ -120,9 +120,9 @@ const Settings: React.FC = () => {
             setTesting(true);
             setStatusMessage({ type: 'info', message: 'Testing Connection...', description: 'Verifying API configuration...' });
 
-            logger.apiRequest('Settings', 'POST', '/api/v1/ai/test');
+            logger.apiRequest('Settings', 'POST', '/api/v1/ai/test/');
 
-            const response = await fetch('/api/v1/ai/test', {
+            const response = await fetch('/api/v1/ai/test/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

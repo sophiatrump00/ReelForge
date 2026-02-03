@@ -5,7 +5,9 @@ import {
     Typography,
     Space,
     Tabs,
+    message
 } from 'antd';
+import axios from 'axios';
 import {
     CloudSyncOutlined,
     ThunderboltOutlined,
@@ -62,19 +64,16 @@ const FileBrowserTab: React.FC = () => {
 
     const handleScanFolder = async () => {
         setLoading(true);
-        logger.apiRequest('Materials', 'GET', '/api/v1/materials/files/scan');
+        logger.apiRequest('Materials', 'GET', '/materials/files/scan');
 
         try {
-            const response = await fetch('/api/v1/materials/files/scan');
-            if (response.ok) {
-                const data = await response.json();
-                setFileSystem(data);
-                logger.apiResponse('Materials', 'GET', '/api/v1/materials/files/scan', 200);
-            } else {
-                logger.apiResponse('Materials', 'GET', '/api/v1/materials/files/scan', response.status);
-            }
+            const response = await axios.get('/api/v1/materials/files/scan');
+            setFileSystem(response.data);
+            logger.apiResponse('Materials', 'GET', '/materials/files/scan', 200);
+            message.success('Directory scanned successfully');
         } catch (error) {
-            logger.apiError('Materials', 'GET', '/api/v1/materials/files/scan', error as Error);
+            logger.apiError('Materials', 'GET', '/materials/files/scan', error as Error);
+            message.error('Failed to scan directory');
         } finally {
             setLoading(false);
         }
@@ -84,6 +83,35 @@ const FileBrowserTab: React.FC = () => {
         setSelectedFile(file);
         setDrawerOpen(true);
         logger.userAction('Materials', 'view_details', { file: file.name });
+    };
+
+    const handlePreview = (file: FileItem) => {
+        logger.userAction('Materials', 'preview', { file: file.name });
+        // Use static file mount (path must be relative to /app/data)
+        // file.path should be correct relative path from backend scan
+        const url = `/files/${file.path}`;
+        window.open(url, '_blank');
+    };
+
+    const handleProcess = async (file: FileItem) => {
+        if (!file.path) {
+            message.error('File path error');
+            return;
+        }
+
+        logger.userAction('Materials', 'process', { file: file.name });
+        message.loading({ content: 'Starting processing...', key: 'process' });
+
+        try {
+            await axios.post('/api/v1/materials/process', {
+                path: file.path
+            });
+            logger.apiResponse('Materials', 'POST', '/materials/process', 200);
+            message.success({ content: 'Processing started', key: 'process' });
+        } catch (error) {
+            logger.apiError('Materials', 'POST', '/materials/process', error as Error);
+            message.error({ content: 'Failed to start processing', key: 'process' });
+        }
     };
 
     const currentFolder = getCurrentFolder();
@@ -128,6 +156,8 @@ const FileBrowserTab: React.FC = () => {
                 onNavigateUp={handleGoUp}
                 onEnterFolder={handleEnterFolder}
                 onViewDetails={handleViewDetails}
+                onPreview={handlePreview}
+                onProcess={handleProcess}
             />
 
             <FileDetailDrawer

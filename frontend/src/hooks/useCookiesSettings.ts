@@ -36,7 +36,7 @@ export const useCookiesSettings = () => {
         logger.userAction('Settings', 'check_cookies', { path: cookiesConfig.path });
 
         try {
-            const res = await fetch('/api/v1/settings/cookies/validate', {
+            const res = await fetch('/api/v1/settings/cookies/validate/', {
                 method: 'POST'
             });
             const data = await res.json();
@@ -102,7 +102,7 @@ export const useCookiesSettings = () => {
 
         try {
             message.loading({ content: 'Updating cookies...', key: 'uploadKey' });
-            const res = await fetch('/api/v1/settings/cookies', { method: 'POST', body: formData });
+            const res = await fetch('/api/v1/settings/cookies/', { method: 'POST', body: formData });
             if (res.ok) {
                 const data = await res.json();
                 message.success({ content: 'Cookies updated successfully', key: 'uploadKey' });

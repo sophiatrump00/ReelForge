@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import axios from 'axios';
 import logger from '../utils/logger';
 
-const getApiUrl = () => 'http://localhost:8000/api/v1';
+const getApiUrl = () => '/api/v1';
 
 interface DashboardStats {
     total_downloads: number;

@@ -65,7 +65,7 @@ const Reports: React.FC = () => {
         });
 
         try {
-            const response = await fetch('/api/v1/reports/generate', {
+            const response = await fetch('/api/v1/reports/generate/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

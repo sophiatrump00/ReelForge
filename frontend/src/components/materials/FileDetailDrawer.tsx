@@ -24,6 +24,7 @@ export interface FileItem {
     name: string;
     type: 'folder' | 'video' | 'markdown' | 'image';
     size?: string;
+    path?: string;
     children?: FileItem[];
     qualityScore?: number;
     positiveKeywords?: string[];

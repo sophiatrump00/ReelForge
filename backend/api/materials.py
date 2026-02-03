@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from backend.db.session import get_db
@@ -7,6 +8,8 @@ from backend.services.archive_service import ArchiveService
 from pydantic import BaseModel
 import os
 from typing import List, Optional
+from backend.workers.process_flow import video_processing_flow
+from fastapi import BackgroundTasks
 
 router = APIRouter()
 
@@ -26,6 +29,10 @@ class FileNode(BaseModel):
     path: str
     size: Optional[int] = 0
     children: List['FileNode'] = []
+
+class ProcessRequest(BaseModel):
+    path: str
+    ad_goal: Optional[str] = None
 
 def scan_directory(path: str, root_path: str) -> List[FileNode]:
     nodes = []
@@ -129,9 +136,11 @@ def clear_archive():
 
 @router.get("/archive/export")
 def export_archive():
-    """Export archive to file and return path."""
+    """Export archive to file and return it."""
     path = ArchiveService.export_to_file()
-    return {"status": "exported", "path": path}
+    if os.path.exists(path):
+        return FileResponse(path, filename="archive.txt", media_type="text/plain")
+    return {"status": "error", "message": "File not found"}
 
 @router.get("/{material_id}", response_model=MaterialOut)
 def read_material(material_id: int, db: Session = Depends(get_db)):
@@ -140,3 +149,21 @@ def read_material(material_id: int, db: Session = Depends(get_db)):
     if not item:
         raise HTTPException(status_code=404, detail="Material not found")
     return item
+
+@router.post("/process")
+def process_video(request: ProcessRequest, background_tasks: BackgroundTasks):
+    """
+    Trigger video processing pipeline in background
+    """
+    # Check if file exists
+    full_path = os.path.join("/app/data", request.path)
+    if not os.path.exists(full_path):
+        raise HTTPException(status_code=404, detail="File not found")
+        
+    output_dir = os.path.join("/app/data/processed", os.path.splitext(os.path.basename(request.path))[0])
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Run in background
+    background_tasks.add_task(video_processing_flow, full_path, output_dir, request.ad_goal)
+    
+    return {"status": "processing_started", "file": request.path}

@@ -18,28 +18,9 @@ def create_download_task(request: DownloadRequest):
     Submit a download task.
     This triggers a Prefect flow run.
     """
-    # In a production setup, we would execute a deployment.
-    # For now, we can run the flow directly (which runs locally or submits if configured)
-    # Or better, use run_deployment if we have one deployed.
-    
-    # Simpler approach for this phase: run as subflow or background task if no deployment yet
-    # Ideally: state = video_download_flow.delay(request.model_dump())
-    
-    # We'll use Prefect's .submit() or .delay() mechanics which depend on the runner.
-    # Since we are setting up a worker, we should ideally CREATE a deployment first.
-    # But to keep it functional "out of the box" without manual CLI deployment steps first:
-    
     try:
-        # This will run immediately in background if using TaskRunner, 
-        # or submit to API if configured properly.
-        # For simplicity in this step, we'll let it handle via sub-process or use deployment later.
-        
-        # NOTE: To use Workers properly, we need to create a Deployment. 
-        # But for the API to just "work" now:
-        
-        # state = video_download_flow.to_deployment(name="api_triggered").run_later(parameters={"request_dict": request.model_dump()})
+        # Trigger the flow run asynchronously
         state = run_deployment(name="video_download_flow/api_triggered", parameters={"request_dict": request.model_dump()}, timeout=0)
-        
         return {"message": "Task submitted", "flow_run_id": str(state)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -119,3 +100,73 @@ def get_batch_status():
     """Get batch links status."""
     return BatchService.get_status()
 
+
+# ============ Terminal Mode ============
+
+import asyncio
+import shlex
+from fastapi.responses import StreamingResponse
+
+@router.post("/terminal")
+async def run_terminal_command(request: DownloadRequest):
+    """
+    Execute yt-dlp command and stream output in real-time.
+    Strictly limited to yt-dlp executable.
+    """
+    try:
+        # Extract arguments
+        # Frontend sends the full arg string in options['custom_args']
+        args_str = ""
+        if request.options and "custom_args" in request.options:
+            args_str = request.options["custom_args"]
+        
+        # Security check: Ensure we are only running yt-dlp
+        # We will NOT execute the user string directly as a shell command.
+        # We will parse arguments and pass them to subprocess with executable='yt-dlp'
+        
+        try:
+            args = shlex.split(args_str)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid command arguments: {e}")
+        
+        # Remove 'yt-dlp' from args if user typed it
+        if args and args[0] == "yt-dlp":
+            args = args[1:]
+            
+        program = "yt-dlp"
+        
+        async def iter_output():
+            yield "Terminal connection established.\n"
+            
+            try:
+                process = await asyncio.create_subprocess_exec(
+                    program,
+                    *args,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.STDOUT,
+                    cwd="/app/data"
+                )
+                
+                yield f"Starting command: {program} {' '.join(args)}\n\n"
+                
+                # Stream stdout line by line
+                while True:
+                    line = await process.stdout.readline()
+                    if not line:
+                        break
+                    yield line.decode('utf-8')
+                
+                return_code = await process.wait()
+                
+                if return_code == 0:
+                    yield "\n\nCommand exited successfully."
+                else:
+                    yield f"\n\nCommand failed with exit code {return_code}."
+                    
+            except Exception as e:
+                yield f"Error starting command: {e}\n"
+
+        return StreamingResponse(iter_output(), media_type="text/plain")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

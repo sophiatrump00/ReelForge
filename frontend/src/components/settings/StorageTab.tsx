@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Form, Input, Card, Descriptions, Progress, Spin, Button, Modal, message, Space } from 'antd';
+import axios from 'axios';
 import { CheckCircleOutlined, CloseCircleOutlined, FolderOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 
 interface DiskStats {
@@ -30,6 +31,8 @@ interface SystemStatus {
     cookies: CookieStats;
 }
 
+const getApiUrl = () => '/api/v1';
+
 const StorageTab: React.FC = () => {
     const [status, setStatus] = useState<SystemStatus | null>(null);
     const [loading, setLoading] = useState(false);
@@ -41,13 +44,11 @@ const StorageTab: React.FC = () => {
     const fetchStatus = async () => {
         setLoading(true);
         try {
-            const res = await fetch('/api/v1/system/status');
-            if (res.ok) {
-                const data = await res.json();
-                setStatus(data);
-            }
+            const res = await axios.get(`${getApiUrl()}/system/status/`);
+            setStatus(res.data);
         } catch (e) {
             console.error(e);
+            message.error('Failed to load system status');
         } finally {
             setLoading(false);
         }
@@ -61,17 +62,9 @@ const StorageTab: React.FC = () => {
             okType: 'danger',
             onOk: async () => {
                 try {
-                    const res = await fetch('/api/v1/system/cleanup', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ target })
-                    });
-                    if (res.ok) {
-                        message.success(`Cleanup started for ${name}`);
-                        setTimeout(fetchStatus, 2000); // Refresh stats
-                    } else {
-                        message.error('Cleanup failed');
-                    }
+                    await axios.post(`${getApiUrl()}/system/cleanup/`, { target });
+                    message.success(`Cleanup started for ${name}`);
+                    setTimeout(fetchStatus, 2000); // Refresh stats
                 } catch {
                     message.error('Error during cleanup');
                 }

@@ -4,7 +4,7 @@ import { ReloadOutlined, DeleteOutlined, ExportOutlined, SyncOutlined, SearchOut
 import axios from 'axios';
 import type { ColumnsType } from 'antd/es/table';
 
-const getApiUrl = () => 'http://localhost:8000/api/v1';
+const getApiUrl = () => '/api/v1';
 
 interface ArchiveEntry {
     id: number;
@@ -109,8 +109,17 @@ const DownloadArchiveTab: React.FC = () => {
 
     const handleExport = async () => {
         try {
-            const response = await axios.get(`${getApiUrl()}/materials/archive/export`);
-            message.success(`Exported to ${response.data.path}`);
+            const response = await axios.get(`${getApiUrl()}/materials/archive/export`, {
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'archive_export.txt');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            message.success('Archive exported successfully');
         } catch (error) {
             console.error('Failed to export archive:', error);
             message.error('Failed to export archive');

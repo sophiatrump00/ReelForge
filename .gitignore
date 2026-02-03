@@ -39,3 +39,7 @@ cookies.txt
 
 # Artifacts/Temp
 tmp/
+.mypy_cache/
+.coverage
+htmlcov/
+docker-compose.override.yml

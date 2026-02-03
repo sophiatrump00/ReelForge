@@ -179,6 +179,15 @@ class ArchiveService:
             latest = db.query(DownloadArchive).order_by(DownloadArchive.downloaded_at.desc()).first()
             file_exists = os.path.exists(ARCHIVE_FILE_PATH)
             
+            # Auto-sync if file exists but total is 0
+            if file_exists and total == 0:
+                logger.info("Auto-syncing archive from file because DB is empty")
+                sync_result = ArchiveService.sync_from_file()
+                if sync_result.get("status") == "synced":
+                     # Refresh counts
+                     total = db.query(DownloadArchive).count()
+                     latest = db.query(DownloadArchive).order_by(DownloadArchive.downloaded_at.desc()).first()
+
             return {
                 "total": total,
                 "last_downloaded_at": latest.downloaded_at.isoformat() if latest and latest.downloaded_at else None,

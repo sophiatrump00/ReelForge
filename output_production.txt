@@ -1,0 +1,31 @@
+Note: Unnecessary use of -X or --request, POST is already inferred.
+* Host localhost:8000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying [::1]:8000...
+* Connected to localhost (::1) port 8000
+> POST /api/v1/download/terminal HTTP/1.1
+> Host: localhost:8000
+> User-Agent: curl/8.5.0
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 84
+> 
+} [84 bytes data]
+< HTTP/1.1 200 OK
+< date: Mon, 02 Feb 2026 16:22:16 GMT
+< server: uvicorn
+< content-type: text/plain; charset=utf-8
+< transfer-encoding: chunked
+< 
+{ [33 bytes data]
+Terminal connection established.
+Starting command: yt-dlp --version
+
+2026.01.31
+100   164    0    80  100    84    187    196 --:--:-- --:--:-- --:--:--   383
+
+Command exited successfully.100   194    0   110  100    84    205    157 --:--:-- --:--:-- --:--:--   362
+* Connection #0 to host localhost left intact

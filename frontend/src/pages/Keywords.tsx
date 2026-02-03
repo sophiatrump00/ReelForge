@@ -39,7 +39,7 @@ const Keywords: React.FC = () => {
     React.useEffect(() => {
         const loadKeywords = async () => {
             try {
-                const res = await fetch('/api/v1/keywords');
+                const res = await fetch('/api/v1/keywords/');
                 if (res.ok) {
                     const data = await res.json();
                     setKeywords(data);
@@ -51,8 +51,17 @@ const Keywords: React.FC = () => {
         loadKeywords();
     }, []);
 
-    const [newPositive, setNewPositive] = useState('');
-    const [newNegative, setNewNegative] = useState('');
+    const [newPositive, setNewPositive] = useState(() => localStorage.getItem('keywords_draft_positive') || '');
+    const [newNegative, setNewNegative] = useState(() => localStorage.getItem('keywords_draft_negative') || '');
+
+    // Persist draft inputs
+    React.useEffect(() => {
+        localStorage.setItem('keywords_draft_positive', newPositive);
+    }, [newPositive]);
+
+    React.useEffect(() => {
+        localStorage.setItem('keywords_draft_negative', newNegative);
+    }, [newNegative]);
 
     const addPositive = () => {
         if (newPositive.trim() && !keywords.positive.includes(newPositive.trim())) {
@@ -142,9 +151,9 @@ const Keywords: React.FC = () => {
 
     const saveConfig = async () => {
         try {
-            logger.apiRequest('Keywords', 'POST', '/api/v1/keywords');
+            logger.apiRequest('Keywords', 'POST', '/api/v1/keywords/');
 
-            const res = await fetch('/api/v1/keywords', {
+            const res = await fetch('/api/v1/keywords/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(keywords)

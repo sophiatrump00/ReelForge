@@ -25,19 +25,30 @@ import NamingTemplatePanel from '../components/process/NamingTemplatePanel';
 const { Title, Text } = Typography;
 
 const Process: React.FC = () => {
+    // Load saved settings
+    const savedSettings = React.useMemo(() => {
+        try {
+            const saved = localStorage.getItem('process_settings_v1');
+            return saved ? JSON.parse(saved) : {};
+        } catch (e) {
+            console.error('Failed to parse process settings', e);
+            return {};
+        }
+    }, []);
+
     // Placement Selection
-    const [selectedPlacements, setSelectedPlacements] = useState<string[]>([]);
-    const [exportHighlightFrames, setExportHighlightFrames] = useState(true);
+    const [selectedPlacements, setSelectedPlacements] = useState<string[]>(savedSettings.selectedPlacements || []);
+    const [exportHighlightFrames, setExportHighlightFrames] = useState(savedSettings.exportHighlightFrames !== undefined ? savedSettings.exportHighlightFrames : true);
 
     // Crop Strategy
-    const [cropStrategy, setCropStrategy] = useState<CropStrategyState>({
+    const [cropStrategy, setCropStrategy] = useState<CropStrategyState>(savedSettings.cropStrategy || {
         '1x1': 'ai_smart',
         '4x5': 'top_align',
         '16x9': 'blur_bg',
     });
 
     // Auto-clip Settings
-    const [clipSettings, setClipSettings] = useState<ClipSettings>({
+    const [clipSettings, setClipSettings] = useState<ClipSettings>(savedSettings.clipSettings || {
         minDuration: 5,
         maxDuration: 60,
         scoreThreshold: 7,
@@ -47,17 +58,42 @@ const Process: React.FC = () => {
     });
 
     // Keyword Detection
-    const [keywordDetection, setKeywordDetection] = useState<KeywordDetectionState>({
+    const [keywordDetection, setKeywordDetection] = useState<KeywordDetectionState>(savedSettings.keywordDetection || {
         enabled: true,
         removeNegative: true,
         keepPositive: true,
     });
 
     // Naming Template
-    const [namingTemplate, setNamingTemplate] = useState('{source}_{date}_{seq}_{placement}_{tag}');
+    const [namingTemplate, setNamingTemplate] = useState(savedSettings.namingTemplate || '{source}_{date}_{seq}_{placement}_{tag}');
+
+    // AI Ad Goal
+    const [adGoal, setAdGoal] = useState(savedSettings.adGoal || '');
 
     // Processing Queue (initially empty)
     const [processingTasks] = useState<ProcessTask[]>([]);
+
+    // Persist all settings
+    React.useEffect(() => {
+        const settings = {
+            selectedPlacements,
+            exportHighlightFrames,
+            cropStrategy,
+            clipSettings,
+            keywordDetection,
+            namingTemplate,
+            adGoal
+        };
+        localStorage.setItem('process_settings_v1', JSON.stringify(settings));
+    }, [
+        selectedPlacements,
+        exportHighlightFrames,
+        cropStrategy,
+        clipSettings,
+        keywordDetection,
+        namingTemplate,
+        adGoal
+    ]);
 
     const cardStyle = {
         background: '#252526',
@@ -65,8 +101,7 @@ const Process: React.FC = () => {
         marginBottom: 16,
     };
 
-    // AI Ad Goal
-    const [adGoal, setAdGoal] = useState('');
+
 
     const startProcessing = () => {
         logger.userAction('Process', 'start_processing', {
